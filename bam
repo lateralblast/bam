@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+
+# Name:         bam (BMC Ansible/Automation Module)
+# Version:      0.0.1
+# Release:      1
+# License:      CC-BA (Creative Commons By Attribution)
+#               http://creativecommons.org/licenses/by/4.0/legalcode
+# Group:        System
+# Source:       N/A
+# URL:          N/A
+# Distribution: UNIX
+# Vendor:       Lateral Blast
+# Packager:     Richard Spindler <richard@lateralblast.com.au>
+# Description:  BMC Ansible/Automation Module
+
+from ansible.constants import mk_boolean
+from ansible.module_utils.basic import *
+import subprocess
+import inspect
+import os
+import re
+
+DOCUMENTATION = '''
+---
+module: bam
+version_added: "post 2.8.0"
+short_description: Automate BMC command line
+dewscription: 
+  - Automate BMC configuration
+options:
+  method:
+    description:
+      - Method to use to set value, e.g. SSH
+  type:
+    description:
+      - Set model of BMC, e.g. iDRAC
+  component:
+    description:
+      - Component that is to have it's parameter set, e.g. LifecycleController.Embedded.1
+  parameter:
+    description:
+      - Used with get/set parameter function, e.g. LCAttributes.1#CollectSystemInventoryOnRestart
+  value:
+    description:
+      - Used with set parameter function, e.g. Enabled
+  hostname:
+    description:
+      - hostname/IP of BMC to connect to
+  username:
+    description:
+      - Username for BMC
+  password;
+    description:
+      - Passwword for BMC
+  keyfile:
+    description:
+      - SSH keyfile 
+'''
+
+EXAMPLES = '''
+# Set LCAttributes.1#CollectSystemInventoryOnRestart to Enabled
+- bam: type = idrac, method = ssh, component = LifecycleController.Embedded.1, parameter = LCAttributes.1#CollectSystemInventoryOnRestart, value = Enabled
+'''
+
+# Initiate SSH Session
+
+def start_ssh_session(ip, username, password):
+  ssh_command = "ssh -o StrictHostKeyChecking=no"
+  ssh_command = "%s %s@%s" % (ssh_command, username, ip)
+  ssh_session = pexpect.spawn(ssh_command)
+  ssh_session.expect("assword: ")
+  ssh_session.sendline(password)
+  return ssh_session
+
+# Set specific know iDRAC value sith SSH without SSH keys
+
+def set_idrac_value_with_ssh_without_keys(module):
+  subroutine = inspect.stack()[0][3]
+  if re.search(r"lan|network",module.params['component']):
+    group = "cfgLanNetworking"
+  if re.search(r"server",module.params['component']):
+    greoup = "cfgServerInfo"
+  if re.search(r"serial",module.params['component']):
+    greoup = "cfgSerial"
+  if re.search(r"[A-Z,a-z]", module.params['component']):
+    command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
+  else:
+    command = "racadm config -g %s -o %s %s" % (module.params['component'], module.params['parameter'], module.params['value'])
+  if module.params['execute'] == True:
+    ssh_session = start_ssh_session(module.params['hostname'], module.params['username'], module.params['password'])
+    ssh_session.expect("/admin1-> ")
+    ssh_session.sendline(command)
+    ssh_session.expect("/admin1-> ")
+    output = ssh_session.before
+    output = output.decode()
+    ssh_session.close()
+    return(output, "", 0, command, subroutine)
+  else:
+    return("", "", 0, command, subroutine)
+  return
+
+# Set specific know iDRAC value sith SSH without SSH keys
+
+def set_idrac_value_with_ssh_with_keys(module):
+  subroutine = inspect.stack()[0][3]
+  if re.search(r"lan|network",module.params['component']):
+    module.params['component'] = "cfgLanNetworking"
+  if re.search(r"server",module.params['component']):
+    module.params['component'] = "cfgServerInfo"
+  if re.search(r"serial",module.params['component']):
+    module.params['component'] = "cfgSerial"
+  if re.search(r"[A-Z,a-z]", module.params['component']):
+    command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
+  else:
+    command = "racadm config -g %s -o %s %s" % (module.params['component'], module.params['parameter'], module.params['value'])
+  command = "ssh -o StrictHostKeyChecking=no %s '%s'" % (module.params['hostname'], command)
+  if module.params['execute'] == True:
+    process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    return(process.stdout, process.stderr, process.returncode, command, subroutine)
+  else:
+    return("", "", 0, command, subroutine)
+  return
+
+# Main routine - Get anisible module parameters, call functions and exit
+
+def main():
+  fields = {
+    'execute':    { 'default': 'yes',   'type': 'str' },
+    'hostname':   { 'default': 'ssh',   'type': 'str' },
+    'keyfile':    { 'default': None,    'type': 'str' },
+    'method':     { 'default': 'ssh',   'type': 'str' },
+    'password':   { 'default': 'idrac', 'type': 'str' },
+    'parameter':  { 'default': None,    'type': 'str' },
+    'type':       { 'default': None,    'type': 'str' },
+    'username':   { 'default': None,    'type': 'str' },
+    'usekey':     { 'default': 'yes',   'type': 'str' },
+    'value':      { 'default': None,    'type': 'str' }
+  }
+  module = AnsibleModule(argument_spec = fields)
+
+  if re.search(r"ssh",module.params['method']):
+    if re.search(r"yes|true",module.params['usekey']):
+      module.params['usekey'] = True
+    else:
+      module.params['usekey'] = False
+      import pexpect
+
+
+  if module.params['type'] == None:
+    if re.search("_", module._name):
+      module.params['type'] = module._name.split("_")[0] 
+    else:
+      module.params['type'] = module._name
+
+   (stdout, stderr, rc, command, subroutine) = 
+
+  if len(stdout) == 0 and len(stderr) > 0:
+    stdout = stderr
+
+  module.exit_json(
+    _name       = module._name,
+    changed     = True,
+    stdout      = stdout, 
+    stderr      = stderr, 
+    rc          = rc, 
+    command     = command, 
+    subroutine  = subroutine,
+    meta        = module.params
+  )
+
+if __name__ == '__main__':
+  main()
