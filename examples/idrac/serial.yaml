@@ -1,0 +1,24 @@
+- name: Configure IPMI over LAN
+  bam:
+    type:       idrac
+    method:     SSH
+    component:  cfgIpmiLan
+    parameter:  cfgIpmiLanEnable
+    value:      {{ serial_enable }}
+    execute:    no
+- name: Configure IPMI Serial over LAN
+  bam:
+    type:       idrac
+    method:     SSH
+    component:  cfgIpmiSerial
+    parameter:  cfgIpmiSerialConsoleEnable
+    value:      {{ serial_enable }}
+    execute:    no
+- name: Configure Serial Console
+  bam:
+    type:       idrac
+    method:     SSH
+    component:  cfgSerial
+    parameter:  cfgSerialConsoleEnable
+    value:      {{ serial_enable }}
+    execute:    no

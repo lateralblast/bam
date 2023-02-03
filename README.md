@@ -5,6 +5,8 @@ BAM
 
 BMC Ansible/Automation Module
 
+Version: 0.0.2
+
 Introduction
 ------------
 
@@ -92,7 +94,17 @@ Then do the following:
 Examples
 --------
 
-Insert examples here...
+
+Set the Lifecyle Controller to collect system inventory on reset using SSH
+
+```
+- bam:
+    type:       idrac
+    method:     ssh
+    component:  LifecycleController.Embedded.1
+    parameter:  LCAttributes.1#CollectSystemInventoryOnRestart
+    value:      Enabled
+```
 
 Detailed iDRAC Example
 ----------------------

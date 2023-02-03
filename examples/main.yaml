@@ -1,0 +1,11 @@
+# Example ansible YAML file
+
+- hosts: idracs
+  vars:
+    serial_enable: "1"
+
+  connection: local
+  become: True
+
+  tasks:
+    - include: idrac/serial.yaml

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.0.1
+# Version:      0.0.2
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -72,16 +72,29 @@ def start_ssh_session(ip, username, password):
   ssh_session.sendline(password)
   return ssh_session
 
+# Parse simplified component tags
+
+def parse_component(module):
+  if re.search(r"lan|network",module.params['component']):
+    if re.search(r"ipmi",module.params['component']):
+      module.params['component'] = "cfgIpmiLan"
+    else:
+      module.params['component'] = "cfgLanNetworking"
+  if re.search(r"server",module.params['component']):
+    module.params['component'] = "cfgServerInfo"
+  if re.search(r"serial",module.params['component']):
+    if re.search(r"ipmi",module.params['component']):
+      module.params['component'] = "cfgIpmiSerial"
+    else:
+      module.params['component'] = "cfgSerial"
+  return(module)
+
+
 # Set specific know iDRAC value sith SSH without SSH keys
 
 def set_idrac_value_with_ssh_without_keys(module):
   subroutine = inspect.stack()[0][3]
-  if re.search(r"lan|network",module.params['component']):
-    group = "cfgLanNetworking"
-  if re.search(r"server",module.params['component']):
-    greoup = "cfgServerInfo"
-  if re.search(r"serial",module.params['component']):
-    greoup = "cfgSerial"
+  module = parse_component(module)
   if re.search(r"[A-Z,a-z]", module.params['component']):
     command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
   else:
@@ -99,16 +112,11 @@ def set_idrac_value_with_ssh_without_keys(module):
     return("", "", 0, command, subroutine)
   return
 
-# Set specific know iDRAC value sith SSH without SSH keys
+# Set specific know iDRAC value sith SSH with SSH keys
 
 def set_idrac_value_with_ssh_with_keys(module):
   subroutine = inspect.stack()[0][3]
-  if re.search(r"lan|network",module.params['component']):
-    module.params['component'] = "cfgLanNetworking"
-  if re.search(r"server",module.params['component']):
-    module.params['component'] = "cfgServerInfo"
-  if re.search(r"serial",module.params['component']):
-    module.params['component'] = "cfgSerial"
+  module = parse_component(module)
   if re.search(r"[A-Z,a-z]", module.params['component']):
     command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
   else:
@@ -125,11 +133,12 @@ def set_idrac_value_with_ssh_with_keys(module):
 
 def main():
   fields = {
+    'action':     { 'default': 'get',   'type': 'str' },
     'execute':    { 'default': 'yes',   'type': 'str' },
-    'hostname':   { 'default': 'ssh',   'type': 'str' },
+    'hostname':   { 'default': None,   'type': 'str' },
     'keyfile':    { 'default': None,    'type': 'str' },
     'method':     { 'default': 'ssh',   'type': 'str' },
-    'password':   { 'default': 'idrac', 'type': 'str' },
+    'password':   { 'default': None, 'type': 'str' },
     'parameter':  { 'default': None,    'type': 'str' },
     'type':       { 'default': None,    'type': 'str' },
     'username':   { 'default': None,    'type': 'str' },
