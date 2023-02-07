@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.0.7
+# Version:      0.0.8
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -286,8 +286,8 @@ def main():
     'fqdd':                 { 'default':  None,    'type': 'str' },
     'fqdds':                { 'default':  False,   'type': 'str' },
     'frequency':            { 'default':  None,    'type': 'str' },
-    'function':             { 'default': 'get',    'type': 'str' },
-    'get':                  { 'default':  True,    'type': 'str' },
+    'function':             { 'default':  None,    'type': 'str' },
+    'get':                  { 'default':  False,    'type': 'str' },
     'groupname':            { 'default':  None,    'type': 'str' },
     'hotspare':             { 'default':  None,    'type': 'str' },
     'keyindex':             { 'default':  None,    'type': 'str' },
@@ -340,9 +340,9 @@ def main():
     'proxyport':            { 'default':  None,    'type': 'str' },
     'proxytype':            { 'default':  None,    'type': 'str' },
     'proxyusername':        { 'default':  None,    'type': 'str' },
-    'put':                  { 'default':  True,    'type': 'str' },
-    'raidlevel':            { 'default':  True,    'type': 'str' },
-    'raidlevelmigration':   { 'default':  True,    'type': 'str' },
+    'put':                  { 'default':  False,   'type': 'str' },
+    'raidlevel':            { 'default':  False,   'type': 'str' },
+    'raidlevelmigration':   { 'default':  False,   'type': 'str' },
     'readpolicy':           { 'default':  None,    'type': 'str' },
     'reboottype':           { 'default':  None,    'type': 'str' },
     'rebuild':              { 'default':  None,    'type': 'str' },
@@ -354,7 +354,7 @@ def main():
     'repeat':               { 'default':  None,    'type': 'str' },
     'replacephysicaldisk':  { 'default':  None,    'type': 'str' },
     'resetconfig':          { 'default':  None,    'type': 'str' },
-    'rollback':             { 'default':  True,    'type': 'str' },
+    'rollback':             { 'default':  False,   'type': 'str' },
     'sanumber':             { 'default':  None,    'type': 'str' },
     'sekmindex':            { 'default':  None,    'type': 'str' },
     'sekmindex':            { 'default':  None,    'type': 'str' },
@@ -384,7 +384,7 @@ def main():
     'state':                { 'default':  None,    'type': 'str' },
     'static':               { 'default':  False,   'type': 'str' },
     'static6':              { 'default':  False,   'type': 'str' },
-    'status':               { 'default':  True,    'type': 'str' },
+    'status':               { 'default':  False,    'type': 'str' },
     'street1':              { 'default':  None,    'type': 'str' },
     'street2':              { 'default':  None,    'type': 'str' },
     'stripesize':           { 'default':  None,    'type': 'str' },
@@ -396,7 +396,7 @@ def main():
     'uid':                  { 'default':  None,    'type': 'str' },
     'unblink':              { 'default':  None,    'type': 'str' },
     'unlock':               { 'default':  None,    'type': 'str' },
-    'update':               { 'default':  True,    'type': 'str' },
+    'update':               { 'default':  False,    'type': 'str' },
     'userindex':            { 'default':  None,    'type': 'str' },
     'username':             { 'default':  None,    'type': 'str' },
     'usesshkey':            { 'default':  True,    'type': 'str' },
@@ -595,8 +595,8 @@ def main():
     switches['static']              = "-s "
     switches['static6']             = "-s6 "
     switches['status']              = "-s "
-    switches['street1']              = "-street1 "
-    switches['street2']              = "-street2 "
+    switches['street1']             = "-street1 "
+    switches['street2']             = "-street2 "
     switches['stripesize']          = "-ss "
     switches['t10pienable']         = "-T10PIEnable "
     switches['tftpserver']          = "-a "
