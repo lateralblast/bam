@@ -10,3 +10,5 @@
 # Consolidated iDRAC functions into a single function
 # 0.0.6: Tue  7 Feb 2023 23:31:30 AEDT
 # Added more iDRAC support
+# 0.0.7: Wed  8 Feb 2023 00:01:50 AEDT
+# Collapsed idrac code into more generic code

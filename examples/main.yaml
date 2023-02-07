@@ -5,7 +5,7 @@
     serial_enable:      "1"
     idrac_username:     "root"
     idrac_password:     "calvin"
-    execute_get:        "yes"
+    execute_get:        "no"
     execute_set:        "no"
     idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
 
