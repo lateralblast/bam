@@ -1,0 +1,3 @@
+- name: Install pexpect python module in ansible
+  pip:
+    name: pexpect

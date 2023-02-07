@@ -1,0 +1,33 @@
+- name: Get IPMI over LAN value via ssh using older method
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    objectgroup:  cfgIpmiLan
+    object:       cfgIpmiLanEnable
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Get IPMI Serial over LAN value via ssh using older method
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    objectgroup:  cfgIpmiSerial
+    object:       cfgIpmiSerialConsoleEnable
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Set Serial Console value via ssh using older method
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    pbmcassword:  "{{ idrac_password }}"
+    objectgroup:  cfgSerial
+    object:       cfgSerialConsoleEnable
+    action:       get
+    execute:      "{{ execute_get }}"

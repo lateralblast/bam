@@ -1,0 +1,20 @@
+- name: Get iDRAC object value via racadm using newer method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    object:       iDRAC.IPMISerial.BaudRate
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Get iDRAC object value via racadm using newer method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    object:       iDRAC.OS-BMC.AdminState
+    action:       get
+    execute:      "{{ execute_get }}"

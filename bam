@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.0.2
+# Version:      0.0.6
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -13,14 +13,20 @@
 # Packager:     Richard Spindler <richard@lateralblast.com.au>
 # Description:  BMC Ansible/Automation Module
 
-from ansible.constants import mk_boolean
-from ansible.module_utils.basic import *
+#from ansible.constants import mk_boolean
+#from ansible.module_utils.basic import *
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+from ansible.module_utils.basic import AnsibleModule
 import subprocess
+import pexpect
 import inspect
+import ssl
 import os
 import re
+from os.path import exists
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bam
 version_added: "post 2.8.0"
@@ -28,140 +34,613 @@ short_description: Automate BMC command line
 dewscription: 
   - Automate BMC configuration
 options:
-  method:
+  bmccommand;
     description:
-      - Method to use to set value, e.g. SSH
-  type:
-    description:
-      - Set model of BMC, e.g. iDRAC
-  component:
-    description:
-      - Component that is to have it's parameter set, e.g. LifecycleController.Embedded.1
-  parameter:
-    description:
-      - Used with get/set parameter function, e.g. LCAttributes.1#CollectSystemInventoryOnRestart
-  value:
-    description:
-      - Used with set parameter function, e.g. Enabled
-  hostname:
+      - Command to run on BMC
+  bmchostname:
     description:
       - hostname/IP of BMC to connect to
-  username:
-    description:
-      - Username for BMC
-  password;
+  bmcpassword;
     description:
       - Passwword for BMC
-  keyfile:
+  bmcusername:
+    description:
+      - Username for BMC
+  bmctype:
+    description:
+      - Set model of BMC, e.g. iDRAC
+  execute:
+    description:
+      - Whether to execute ansible stanza (useful for debugging)
+  function:
+    description:
+      - Action to perform (e.g. get/set)
+  keyindex:
+    description:
+      - Key number in iDRAC key index
+  method:
+    description:
+      - Method to use to set value, e.g. SSH, or racadm
+  object:
+    description:
+      - Parameter/object to be set , e.g. cfgIpmiLanEnable
+  objectgroup:
+    description:
+      - Component that is to have it's object set, e.g. cfgIpmi - Used with older versions of racadm
+  options:
+    description:
+      - Additional options to add to command line
+  outputfile:
+    description:
+      - Output file
+  outputtype:
+    description:
+      - Output type (e.g. XML)
+  powerstate:
+    description:
+      - Power state (used with some iDRAC commands)
+  sharelocation:
+    description:
+      - Share location
+  sharepassword:
+    description:
+      - Share password
+  shareusername:
+    description:
+      - Share username 
+  shutdowntype:
+    description:
+      - Shutdown type (used with some iDRAC commands)
+  sshkeyfile:
     description:
       - SSH keyfile 
+  sshkeytext:
+    description:
+      - SSH key test 
+  sshkeytype:
+    description:
+      - SSH key type
+  usesshkey:
+    description:
+      - Use SSH key 
+  value:
+    description:
+      - Used with set object function, e.g. Enabled
+  waittime:
+    description:
+      - Wait time before executing command (used with some iDRAC commands)
 '''
 
-EXAMPLES = '''
-# Set LCAttributes.1#CollectSystemInventoryOnRestart to Enabled
-- bam: type = idrac, method = ssh, component = LifecycleController.Embedded.1, parameter = LCAttributes.1#CollectSystemInventoryOnRestart, value = Enabled
+EXAMPLES = r'''
+#  Enabling IPMI over LAN
+- name: Enable IPMI over LAN via racadm using old method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  idrac001.net
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:       set
+    objectgroup:  cfgIpmiLan
+    object:       cfgIpmiLanEnable
+    value:        1
+- name: Enable IPMI over LAN via racadm using new method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmxhostname:  idrac001.net
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:       set
+    object:       iDRAC.IPMILan.Enable
+    value:        Enabled
 '''
 
 # Initiate SSH Session
 
-def start_ssh_session(ip, username, password):
+def start_ssh_session(module):
   ssh_command = "ssh -o StrictHostKeyChecking=no"
-  ssh_command = "%s %s@%s" % (ssh_command, username, ip)
+  ssh_command = "%s %s@%s" % (ssh_command, module.params['bmcusername'], module.params['bmchostname'])
   ssh_session = pexpect.spawn(ssh_command)
   ssh_session.expect("assword: ")
-  ssh_session.sendline(password)
-  return ssh_session
+  ssh_session.sendline(module.params['bmcpassword'])
+  return(ssh_session)
 
-# Parse simplified component tags
+# Parse simplified group tags
 
-def parse_component(module):
-  if re.search(r"lan|network",module.params['component']):
-    if re.search(r"ipmi",module.params['component']):
-      module.params['component'] = "cfgIpmiLan"
+def parse_group(module):
+  if re.search(r"lan|network",module.params['objectgroup']):
+    if re.search(r"ipmi",module.params['objectgroup']):
+      module.params['objectgroup'] = "cfgIpmiLan"
     else:
-      module.params['component'] = "cfgLanNetworking"
-  if re.search(r"server",module.params['component']):
-    module.params['component'] = "cfgServerInfo"
-  if re.search(r"serial",module.params['component']):
-    if re.search(r"ipmi",module.params['component']):
-      module.params['component'] = "cfgIpmiSerial"
+      module.params['objectgroup'] = "cfgLanNetworking"
+  if re.search(r"server",module.params['objectgroup']):
+    module.params['objectgroup'] = "cfgServerInfo"
+  if re.search(r"serial",module.params['objectgroup']):
+    if re.search(r"ipmi",module.params['objectgroup']):
+      module.params['objectgroup'] = "cfgIpmiSerial"
     else:
-      module.params['component'] = "cfgSerial"
+      module.params['objectgroup'] = "cfgSerial"
   return(module)
 
+# Set/get iDRAC value 
 
-# Set specific know iDRAC value sith SSH without SSH keys
-
-def set_idrac_value_with_ssh_without_keys(module):
+def get_set_idrac_value(module, switches):
   subroutine = inspect.stack()[0][3]
-  module = parse_component(module)
-  if re.search(r"[A-Z,a-z]", module.params['component']):
-    command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
+  if module.params['objectgroup'] == None:
+    if re.searcg(r"autoupdatescheduler|bioscert", module.params['function']):
+      command = module.params['function']
+      if module.params['function'] == "autoupdatescheduler":
+        for item in [ 'action', 'outputfile', 'outputtype', 'shareusername', 'sharepassword', 'sharelocation', 'proxyhostname', 'proxyusername', 'proxypassword', 'proxyport', 'proxytype', 'time', 'dom', 'dow', 'wom', 'repeat', 'apply' ]:
+          if not module.params[item] == None:
+            command = "%s %s %s" % (command, switches[item], module.params[item])
+      if module.params['function'] == "biosview":
+        for item in [ 'action' ]:
+          if not module.params[item] == None:
+            command = "%s %s %s" % (command, switches[item], module.params[item])
+    else:
+      if module.params['function'] == "execute":
+        command = module.params['bmccommand']
+      else:
+        if module.params['function'] == "sshpkauth":
+          if module.params['sshkeytext'] == None:
+            command = "%s -i %s -k %s -f %s" % (module.params['function'], module.params['userindex'], module.params['keyindex'], module.params['sshkeyfile'])
+          else:
+            command = "%s -i %s -k %s -t '%s'" % (module.params['function'], module.params['userindex'], module.params['keyindex'], module.params['sshkeytext'])
+        else:
+          if module.params['function'] == "set":
+            if module.params['outputfile'] == None:
+              command = "%s %s %s" % (module.params['function'], module.params['object'], module.params['value'])
+            else:
+              command = "%s" % (module.params['function'])
+              for item in [ 'outputfile', 'outputtype', 'shareusername', 'sharepassword', 'sharelocation', 'shutdowntype', 'waittime', 'powerstate', 'fqdds' ]:
+                if not module.params[item] == None:
+                  command = "%s %s %s" % (command, switches[item], module.params[item])
+          else:
+            if module.params['outputfile'] == None:
+              if module.params['function'] == "get":
+                command = "%s %s" % (module.params['function'], module.params['object'])
+              else:
+                command = module.params['function']
+            else:
+              command = "%s" % (module.params['function'])
+              for item in [ 'outputfile', 'outputtype', 'shareusername', 'sharepassword', 'sharelocation', 'shutdowntype', 'waittime', 'powerstate', 'fqdds' ]:
+                if not module.params[item] == None:
+                  command = "%s %s %s" % (command, switches[item], module.params[item])
   else:
-    command = "racadm config -g %s -o %s %s" % (module.params['component'], module.params['parameter'], module.params['value'])
+    module = parse_group(module)
+    if module.params['function'] == "set":
+      command = "config -g %s -o %s %s" % (module.params['objectgroup'], module.params['object'], module.params['value'])
+    else:
+      command = "getconfig -g %s -o %s" % (module.params['objectgroup'], module.params['object'])
+  if not module.params['options'] == None:
+    command = "%s %s" % (command, module.params['options'])
   if module.params['execute'] == True:
-    ssh_session = start_ssh_session(module.params['hostname'], module.params['username'], module.params['password'])
-    ssh_session.expect("/admin1-> ")
-    ssh_session.sendline(command)
-    ssh_session.expect("/admin1-> ")
-    output = ssh_session.before
-    output = output.decode()
-    ssh_session.close()
-    return(output, "", 0, command, subroutine)
+    if not module.params['function'] == "execute":
+      command = "racadm %s" % (command)
+    if module.params['method'] == "ssh":
+      if module.params['usesshkey'] == True:
+        command = "ssh -o StrictHostKeyChecking=no %s@%s -i %s '%s'" % (module.params['bmcusername'], module.params['bmchostname'], module.params['sshkeyfile'], command)
+        process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        output  = process.stdout
+        output  = output.split("\n")[0]
+        output  = output.split("\r")[0]
+        return(output, process.stderr, process.returncode, command, subroutine)
+      else:
+        ssh_session = start_ssh_session(module)
+        ssh_session.expect("/admin1-> ")
+        ssh_session.sendline(command)
+        ssh_session.expect("/admin1-> ")
+        output = ssh_session.before
+        output = output.decode()
+        output = output.split("\n")[1]
+        output = output.split("\r")[1]
+        ssh_session.close()
+        return(output, "", 0, command, subroutine)
+    else:
+      command = "racadm -r %s -u %s -p %s %s" % (module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
+      process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+      return(process.stdout, process.stderr, process.returncode, command, subroutine)
   else:
     return("", "", 0, command, subroutine)
   return
 
-# Set specific know iDRAC value sith SSH with SSH keys
-
-def set_idrac_value_with_ssh_with_keys(module):
-  subroutine = inspect.stack()[0][3]
-  module = parse_component(module)
-  if re.search(r"[A-Z,a-z]", module.params['component']):
-    command = "racadm set %s %s" % (module.params['parameter'], module.params['value'])
-  else:
-    command = "racadm config -g %s -o %s %s" % (module.params['component'], module.params['parameter'], module.params['value'])
-  command = "ssh -o StrictHostKeyChecking=no %s '%s'" % (module.params['hostname'], command)
-  if module.params['execute'] == True:
-    process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    return(process.stdout, process.stderr, process.returncode, command, subroutine)
-  else:
-    return("", "", 0, command, subroutine)
-  return
-
-# Main routine - Get anisible module parameters, call functions and exit
+# Main routine - Get anisible module objects, call functions and exit
 
 def main():
   fields = {
-    'action':     { 'default': 'get',   'type': 'str' },
-    'execute':    { 'default': 'yes',   'type': 'str' },
-    'hostname':   { 'default': None,   'type': 'str' },
-    'keyfile':    { 'default': None,    'type': 'str' },
-    'method':     { 'default': 'ssh',   'type': 'str' },
-    'password':   { 'default': None, 'type': 'str' },
-    'parameter':  { 'default': None,    'type': 'str' },
-    'type':       { 'default': None,    'type': 'str' },
-    'username':   { 'default': None,    'type': 'str' },
-    'usekey':     { 'default': 'yes',   'type': 'str' },
-    'value':      { 'default': None,    'type': 'str' }
+    'action':               { 'default':  None,    'type': 'str' },
+    'alertcategory':        { 'default':  None,    'type': 'str' },
+    'apply':                { 'default':  None,    'type': 'str' },
+    'assign':               { 'default':  None,    'type': 'str' },
+    'binarymode':           { 'default':  False,   'type': 'str' },
+    'blink':                { 'default':  False,   'type': 'str' },
+    'bmccommand':           { 'default':  None,    'type': 'str' },
+    'bmchostname':          { 'default':  None,    'type': 'str' },
+    'bmcpassword':          { 'default':  None,    'type': 'str' },
+    'bmcusername':          { 'default':  None,    'type': 'str' },
+    'bmctype':              { 'default':  None,    'type': 'str' },
+    'cancelbgi':            { 'default':  None,    'type': 'str' },
+    'cancelcheck':          { 'default':  None,    'type': 'str' },
+    'cancelrebuild':        { 'default':  None,    'type': 'str' },
+    'capacityexpansion':    { 'default':  None,    'type': 'str' },
+    'ccheck':               { 'default':  None,    'type': 'str' },
+    'certtype':             { 'default':  None,    'type': 'str' },
+    'city':                 { 'default':  None,    'type': 'str' },
+    'clearconfig':          { 'default':  None,    'type': 'str' },
+    'closeallsessions':     { 'default':  False,   'type': 'str' },
+    'compact':              { 'default':  False,   'type': 'str' },
+    'company':              { 'default':  None,    'type': 'str' },
+    'component':            { 'default':  None,    'type': 'str' },
+    'converttononraid':     { 'default':  None,    'type': 'str' },
+    'converttoraid':        { 'default':  None,    'type': 'str' },
+    'count':                { 'default':  None,    'type': 'str' },
+    'country':              { 'default':  None,    'type': 'str' },
+    'createsecuritykey':    { 'default':  False,   'type': 'str' },
+    'cryptographicerase':   { 'default':  False,   'type': 'str' },
+    'current':              { 'default':  False,   'type': 'str' },
+    'datetime':             { 'default':  False,   'type': 'str' },
+    'dhcp':                 { 'default':  False,   'type': 'str' },
+    'dhcp6':                { 'default':  False,   'type': 'str' },
+    'discardcache':         { 'default':  None,    'type': 'str' },
+    'displaybios':          { 'default':  False,   'type': 'str' },
+    'displaycpld':          { 'default':  False,   'type': 'str' },
+    'displayidsdm':         { 'default':  False,   'type': 'str' },
+    'displaynumber':        { 'default':  False,   'type': 'str' },
+    'displayonlyraw':       { 'default':  False,   'type': 'str' },
+    'displaytotal':         { 'default':  False,   'type': 'str' },
+    'delete':               { 'default':  False,   'type': 'str' },
+    'deletesecuritykey':    { 'default':  None,    'type': 'str' },
+    'deletevd':             { 'default':  None,    'type': 'str' },
+    'diskcachepolicy':      { 'default':  None,    'type': 'str' },
+    'displayraw':           { 'default':  False,   'type': 'str' },
+    'dom':                  { 'default':  None,    'type': 'str' },
+    'dow':                  { 'default':  None,    'type': 'str' },
+    'downloadlocation':     { 'default':  None,    'type': 'str' },
+    'dstpd':                { 'default':  None,    'type': 'str' },
+    'entitlementid':        { 'default':  None,    'type': 'str' },
+    'execute':              { 'default':  True,    'type': 'str' },
+    'expirationtime':       { 'default':  None,    'type': 'str' },
+    'filename':             { 'default':  None,    'type': 'str' },
+    'filter':               { 'default':  None,    'type': 'str' },
+    'force':                { 'default':  False,   'type': 'str' },
+    'forceoffline':         { 'default':  None,    'type': 'str' },
+    'forceonline':          { 'default':  None,    'type': 'str' },
+    'forcereset':           { 'default':  False,   'type': 'str' },
+    'format':               { 'default':  None,    'type': 'str' },
+    'fqdd':                 { 'default':  None,    'type': 'str' },
+    'fqdds':                { 'default':  False,   'type': 'str' },
+    'frequency':            { 'default':  None,    'type': 'str' },
+    'function':             { 'default': 'get',    'type': 'str' },
+    'get':                  { 'default':  True,    'type': 'str' },
+    'groupname':            { 'default':  None,    'type': 'str' },
+    'hotspare':             { 'default':  None,    'type': 'str' },
+    'keyindex':             { 'default':  None,    'type': 'str' },
+    'ignoreheaders':        { 'default':  False,   'type': 'str' },
+    'importconfig':         { 'default':  None,    'type': 'str' },
+    'index':                { 'default':  None,    'type': 'str' },
+    'init':                 { 'default':  None,    'type': 'str' },
+    'jobid':                { 'default':  None,    'type': 'str' },
+    'jobindex':             { 'default':  None,    'type': 'str' },
+    'key':                  { 'default':  None,    'type': 'str' },
+    'keysubtype':           { 'default':  None,    'type': 'str' },
+    'keytext':              { 'default':  None,    'type': 'str' },
+    'keytype':              { 'default':  None,    'type': 'str' },
+    'ledstate':             { 'default':  None,    'type': 'str' },
+    'level':                { 'default':  None,    'type': 'str' },
+    'location':             { 'default':  None,    'type': 'str' },
+    'logtype':              { 'default':  None,    'type': 'str' },
+    'mdtype':               { 'default':  None,    'type': 'str' },
+    'messageid':            { 'default':  None,    'type': 'str' },
+    'method':               { 'default': 'ssh',    'type': 'str' },
+    'mode':                 { 'default':  None,    'type': 'str' },
+    'modifysecuritykey':    { 'default':  None,    'type': 'str' },
+    'module':               { 'default':  None,    'type': 'str' },
+    'name':                 { 'default':  None,    'type': 'str' },
+    'newpasswd':            { 'default':  None,    'type': 'str' },
+    'newraidlevel':         { 'default':  None,    'type': 'str' },
+    'object':               { 'default':  None,    'type': 'str' },
+    'objectgroup':          { 'default':  None,    'type': 'str' },
+    'override':             { 'default':  False,   'type': 'str' },
+    'optimized':            { 'default':  False,   'type': 'str' },
+    'options':              { 'default':  None,    'type': 'str' },
+    'outputfile':           { 'default':  None,    'type': 'str' },
+    'outputtype':           { 'default':  None,    'type': 'str' },
+    'panumber':             { 'default':  None,    'type': 'str' },
+    'passphrase':           { 'default':  None,    'type': 'str' },
+    'passwd':               { 'default':  None,    'type': 'str' },
+    'password':             { 'default':  None,    'type': 'str' },
+    'patrolread':           { 'default':  None,    'type': 'str' },
+    'pcode':                { 'default':  None,    'type': 'str' },
+    'pdkey':                { 'default':  None,    'type': 'str' },
+    'pending':              { 'default':  False,   'type': 'str' },
+    'pfname':               { 'default':  None,    'type': 'str' },
+    'plname':               { 'default':  None,    'type': 'str' },
+    'pmailid':              { 'default':  None,    'type': 'str' },
+    'pmnumber':             { 'default':  None,    'type': 'str' },
+    'powerstate':           { 'default':  None,    'type': 'str' },
+    'preparetoremove':      { 'default':  None,    'type': 'str' },
+    'propertyname':         { 'default':  None,    'type': 'str' },
+    'proxyhostname':        { 'default':  None,    'type': 'str' },
+    'proxyport':            { 'default':  None,    'type': 'str' },
+    'proxytype':            { 'default':  None,    'type': 'str' },
+    'proxyusername':        { 'default':  None,    'type': 'str' },
+    'put':                  { 'default':  True,    'type': 'str' },
+    'raidlevel':            { 'default':  True,    'type': 'str' },
+    'raidlevelmigration':   { 'default':  True,    'type': 'str' },
+    'readpolicy':           { 'default':  None,    'type': 'str' },
+    'reboottype':           { 'default':  None,    'type': 'str' },
+    'rebuild':              { 'default':  None,    'type': 'str' },
+    'recordperline':        { 'default':  False,   'type': 'str' },
+    'records':              { 'default':  None,    'type': 'str' },
+    'refkey':               { 'default':  None,    'type': 'str' },
+    'rekey':                { 'default':  None,    'type': 'str' },
+    'renamevd':             { 'default':  None,    'type': 'str' },
+    'repeat':               { 'default':  None,    'type': 'str' },
+    'replacephysicaldisk':  { 'default':  None,    'type': 'str' },
+    'resetconfig':          { 'default':  None,    'type': 'str' },
+    'rollback':             { 'default':  True,    'type': 'str' },
+    'sanumber':             { 'default':  None,    'type': 'str' },
+    'sekmindex':            { 'default':  None,    'type': 'str' },
+    'sekmindex':            { 'default':  None,    'type': 'str' },
+    'sekmserver1':          { 'default':  None,    'type': 'str' },
+    'sekmserver2':          { 'default':  None,    'type': 'str' },
+    'sessionid':            { 'default':  None,    'type': 'str' },
+    'sessionusername':      { 'default':  None,    'type': 'str' },
+    'setbootvd':            { 'default':  None,    'type': 'str' },
+    'setencryptionmode':    { 'default':  None,    'type': 'str' },
+    'sfname':               { 'default':  None,    'type': 'str' },
+    'sharelocation':        { 'default':  None,    'type': 'str' },
+    'sharepassword':        { 'default':  None,    'type': 'str' },
+    'shareusername':        { 'default':  None,    'type': 'str' },
+    'shutdowntype':         { 'default':  None,    'type': 'str' },
+    'size':                 { 'default':  None,    'type': 'str' },
+    'slname':               { 'default':  None,    'type': 'str' },
+    'smailid':              { 'default':  None,    'type': 'str' },
+    'smnumber':             { 'default':  None,    'type': 'str' },
+    'speed':                { 'default':  None,    'type': 'str' },
+    'sshkeyfile':           { 'default':  None,    'type': 'str' },
+    'sshkeytext':           { 'default':  None,    'type': 'str' },
+    'sshkeytype':           { 'default': 'rsa',    'type': 'str' },
+    'start':                { 'default':  None,    'type': 'str' },
+    'start-date':           { 'default':  None,    'type': 'str' },
+    'start-time':           { 'default':  None,    'type': 'str' },
+    'starttime':            { 'default':  None,    'type': 'str' },
+    'state':                { 'default':  None,    'type': 'str' },
+    'static':               { 'default':  False,   'type': 'str' },
+    'static6':              { 'default':  False,   'type': 'str' },
+    'status':               { 'default':  True,    'type': 'str' },
+    'street1':              { 'default':  None,    'type': 'str' },
+    'street2':              { 'default':  None,    'type': 'str' },
+    'stripesize':           { 'default':  None,    'type': 'str' },
+    'subfunction':          { 'default':  None,    'type': 'str' },
+    't10pienable':          { 'default':  False,   'type': 'str' },
+    'tftpserver':           { 'default':  None,    'type': 'str' },
+    'transactionid':        { 'default':  None,    'type': 'str' },
+    'time':                 { 'default':  None,    'type': 'str' },
+    'uid':                  { 'default':  None,    'type': 'str' },
+    'unblink':              { 'default':  None,    'type': 'str' },
+    'unlock':               { 'default':  None,    'type': 'str' },
+    'update':               { 'default':  True,    'type': 'str' },
+    'userindex':            { 'default':  None,    'type': 'str' },
+    'username':             { 'default':  None,    'type': 'str' },
+    'usesshkey':            { 'default':  True,    'type': 'str' },
+    'value':                { 'default':  None,    'type': 'str' },
+    'vdkey':                { 'default':  None,    'type': 'str' },
+    'view':                 { 'default':  False,   'type': 'str' },
+    'waittime':             { 'default':  None,    'type': 'str' },
+    'wom':                  { 'default':  None,    'type': 'str' },
+    'writepolicy':          { 'default':  None,    'type': 'str' },
+    'zip':                  { 'default':  None,    'type': 'str' }
   }
   module = AnsibleModule(argument_spec = fields)
 
-  if re.search(r"ssh",module.params['method']):
-    if re.search(r"yes|true",module.params['usekey']):
-      module.params['usekey'] = True
-    else:
-      module.params['usekey'] = False
-      import pexpect
+  stdout  = ""
+  stderr  = ""
+  rc      = 1
+  command = ""
+  subroutine = ""
 
-
-  if module.params['type'] == None:
+  if module.params['bmctype'] == None:
     if re.search("_", module._name):
-      module.params['type'] = module._name.split("_")[0] 
+      module.params['bmctype'] = module._name.split("_")[0] 
     else:
-      module.params['type'] = module._name
+      module.params['bmctype'] = module._name
 
-   (stdout, stderr, rc, command, subroutine) = 
+  if re.search(r"true|yes", str(module.params['execute']).lower()):
+    module.params['execute'] = True
+  else:
+    module.params['execute'] = False
+
+  if re.search(r"true|yes", str(module.params['usesshkey']).lower()):
+    module.params['usesshkey'] = True
+  else:
+    module.params['usesshkey'] = False
+
+  if module.params['sshkeyfile'] == None:
+    home_dir = os.environ['HOME']
+    ssh_key_file = "%s/.ssh/id_%s" % (home_dir, module.params['sshkeytype'])
+    if exists(ssh_key_file):
+      module.params['sshkeyfile'] = ssh_key_file
+
+  if re.search(r"ssh",module.params['method']):
+    if module.params['bmcpassword'] == None:
+      module.params['usesshkey'] = True
+    else:
+      if re.search(r"[A-Z]|[a-z]|[0-9]", module.params['bmcpassword']):
+        module.params['usesshkey'] = False
+      else:
+        module.params['usesshkey'] = True
+
+  if module.params['bmctype'] == "idrac":
+    switches = dict()
+    switches['action']              = "-a "
+    switches['alertcategory']       = "-c "
+    switches['apply']               = "-a "
+    switches['assign']              = "-assign "
+    switches['binarymode']          = "-b "
+    switches['blink']               = "blink:"
+    switches['bmchostname']         = "-r "
+    switches['cancelbgi']           = "cancelbgi:"
+    switches['cancelcheck']         = "cancelcheck:"
+    switches['cancelrebuild']       = "cancelrebuild:"
+    switches['capacityexpansion']   = "capacityexpansion:"
+    switches['ccheck']              = "ccheck:"
+    switches['certtype']            = "-t "
+    switches['city']                = "-city "
+    switches['clearconfig']         = "clearconfig:"
+    switches['closeallsessions']    = "-a "
+    switches['compact']             = "-c "
+    switches['company']             = "-company "
+    switches['connectimage']        = "-c "
+    switches['converttononraid']    = "converttononraid:"
+    switches['converttoraid']       = "converttoraid:"
+    switches['count']               = "-c "
+    switches['country']             = "-country "
+    switches['createsecuritykey']   = "createsecuritykey:"
+    switches['cryptographicerase']  = "cryptographicerase:"
+    switches['current']             = "-current "
+    switches['datetime']            = "-d "
+    switches['delete']              = "-d "
+    switches['deletesecuritykey']   = "deletesecuritykey:"
+    switches['deletevd']            = "deletevd:"
+    switches['dhcp']                = "-d "
+    switches['dhcp6']               = "-d6 "
+    switches['discardcache']        = "discardcache:"
+    switches['disconnectimage']     = "-d "
+    switches['diskcachepolicy']     = "-dcp "
+    switches['displaynumber']       = "-d "
+    switches['displayonlyraw']      = "-R "
+    switches['displayraw']          = "-E "
+    switches['displaytotal']        = "-i "
+    switches['dom']                 = "-dom "
+    switches['dow']                 = "-dow "
+    switches['downloadlocation']    = "-d "
+    switches['dstpd']               = "-dstpd "
+    switches['enable6']             = "-o "
+    switches['encryptvd']           = "encryptvd:"
+    switches['entitlementid']       =  "-e "
+    switches['expirationtime']      = "-e "
+    switches['fqdds']               = "-c "
+    switches['fqdd']                = "-fqdd "
+    switches['filename']            = "-f "
+    switches['filter']              = "-f "
+    switches['force']               = "-f "
+    switches['forceoffline']        = "forceoffline:"
+    switches['forceonline']         = "forceonline:"
+    switches['forcereset']          = "-f "
+    switches['format']              = "-f "
+    switches['frequency']           = "-s "
+    switches['get']                 = "-g "
+    switches['groupname']           = "-g "
+    switches['hotspare']            = "hotspare:"
+    switches['ignoreheaders']       = "-A "
+    switches['importconfig']        = "importconfig:"
+    switches['index']               = "-i "
+    switches['init']                = "init:"
+    switches['jobid']               = "-i "
+    switches['jobindex']            = "-i "
+    switches['key']                 = "-key "
+    switches['keysubtype']          = "-k "
+    switches['keyindex']            = "-k "
+    switches['keytext']             = "-t "
+    switches['keytype']             = "-t "
+    switches['level']               = "-level "
+    switches['ledstate']            = "-l "
+    switches['location']            = "-l "
+    switches['logtype']             = "-t "
+    switches['mdtype']              = "-mdtype "
+    switches['messageid']           = "-i "
+    switches['mode']                = "-m "
+    switches['modifysecuritykey']   = "modifysecuritykey:"
+    switches['module']              = "-m "
+    switches['name']                = "-name "
+    switches['newpasswd']           = "-newpasswd "
+    switches['newraidlevel']        = "-new_rl "
+    switches['optimized']           = "-o "
+    switches['outputfile']          = "-f "
+    switches['outputtype']          = "-t "
+    switches['override']            = "-o "
+    switches['panumber']            = "-panumber "
+    switches['passphrase']          = "-p "
+    switches['passwd']              = "-passwd "
+    switches['password']            = "-p "
+    switches['patrolread']          = "patrolread:"
+    switches['pcode']               = "-pcode "
+    switches['pdkey']               = "-pdkey:"
+    switches['pending']             = "-pending "
+    switches['pfname']              = "-pfname "
+    switches['plname']              = "-plname "
+    switches['pmailid']             = "-pmailid "
+    switches['pmnumber']            = "-pmnumber "
+    switches['powerstate']          = "-s "
+    switches['preparetoremove']     = "preparetoremove"
+    switches['propertyname']        = "-p "
+    switches['proxyhostname']       = "-ph "
+    switches['proxypassword']       = "-pp "
+    switches['proxyport']           = "-po "
+    switches['proxytype']           = "-po "
+    switches['proxyusername']       = "-pu "
+    switches['put']                 = "-p "
+    switches['raidlevel']           = "-rl "
+    switches['raidlevelmigration']  = "raidlevelmigration:"
+    switches['readpolicy']          = "-rp "
+    switches['rebuild']             = "rebuild:"
+    switches['recordperline']       = "-o "
+    switches['records']             = "-c "
+    switches['refkey']              = "--refkey "
+    switches['rekey']               = "rekey:"
+    switches['renamevd']            = "renamevd:"
+    switches['replacephysicaldisk'] = "replacephysicaldisk:"
+    switches['resetconfig']         = "resetconfig:"
+    switches['rollbackt']           = "-r "
+    switches['sanumber']            = "-sanumber "
+    switches['sekmindex']           = "-i "
+    switches['sekmserver1']         = "-p "
+    switches['sekmserver2']         = "-s "
+    switches['sessionid']           = "-i "
+    switches['sessionusername']     = "-i "
+    switches['setbootvd']           = "setbootvd:"
+    switches['setencryptionmode']   = "setencryptionmode:"
+    switches['sfname']              = "-sfname "
+    switches['shutdowntype']        = "-b "
+    switches['shareusername']       = "-u "
+    switches['sharepassword']       = "-p "
+    switches['sharelocation']       = "-l "
+    switches['size']                = "-size "
+    switches['slname']              = "-slname "
+    switches['smailid']             = "-smailid "
+    switches['smnumber']            = "-smnumber "
+    switches['speed']               = "-speed "
+    switches['start']               = "-s "
+    switches['start-date']          = "-d "
+    switches['start-time']          = "-t "
+    switches['starttime']           = "-s "
+    switches['state']               = "-state "
+    switches['static']              = "-s "
+    switches['static6']             = "-s6 "
+    switches['status']              = "-s "
+    switches['street1']              = "-street1 "
+    switches['street2']              = "-street2 "
+    switches['stripesize']          = "-ss "
+    switches['t10pienable']         = "-T10PIEnable "
+    switches['tftpserver']          = "-a "
+    switches['time']                = "-time "
+    switches['transactionid']       = "-t "
+    switches['uid']                 = "-uid "
+    switches['unblink']             = "unblink:"
+    switches['unlock']              = "unlock:"
+    switches['update']              = "-u "
+    switches['username']            = "-u "
+    switches['userindex']           = "-i "
+    switches['vdkey']               = "-vdkey:"
+    switches['view']                = "-v "
+    switches['waittime']            = "-w "
+    switches['wom']                 = "-wom "
+    switches['writepolicy']         = "-wp "
+    switches['zip']                 = "-zip "
+    if module.params['method'] == "ssh":
+      (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
 
   if len(stdout) == 0 and len(stderr) > 0:
     stdout = stderr

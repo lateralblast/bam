@@ -2,3 +2,11 @@
 # Initial commit
 # 0.0.2: Fri  3 Feb 2023 13:14:00 AEDT
 # Added shell of examples directory
+# 0.0.3: Mon  6 Feb 2023 14:29:33 AEDT
+# Added ability to ssh with key file
+# 0.0.4: Mon  6 Feb 2023 17:46:40 AEDT
+# Modified parameters to allow easier future expansion
+# 0.0.5: Mon  6 Feb 2023 20:13:58 AEDT
+# Consolidated iDRAC functions into a single function
+# 0.0.6: Tue  7 Feb 2023 23:31:30 AEDT
+# Added more iDRAC support

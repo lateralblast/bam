@@ -1,0 +1,33 @@
+- name: Get IPMI over LAN value via racadm using older method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    objectgroup:  cfgIpmiLan
+    object:       cfgIpmiLanEnable
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Get IPMI Serial over LAN value via racadm using older method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    objectgroup:  cfgIpmiSerial
+    object:       cfgIpmiSerialConsoleEnable
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Set Serial Console value via racadm using older method
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    bmcpassword:  "{{ idrac_password }}"
+    objectgroup:  cfgSerial
+    object:       cfgSerialConsoleEnable
+    action:       get
+    execute:      "{{ execute_get }}"

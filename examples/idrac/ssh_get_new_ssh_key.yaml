@@ -1,0 +1,22 @@
+- name: Get iDRAC object value via ssh using newer method
+  bam:
+    bmctype:      idrac
+    method:       ssh 
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    usesshkey:    true
+    sshkeyfile:   "{{idrac_sshkey_file}}"
+    object:       iDRAC.IPv4.Address
+    action:       get
+    execute:      "{{ execute_get }}"
+- name: Get iDRAC object value via ssh using newer method
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    usesshkey:    true
+    sshkeyfile:   "{{idrac_sshkey_file}}"
+    object:       iDRAC.OS-BMC.AdminState
+    action:       get
+    execute:      "{{ execute_get }}"
