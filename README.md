@@ -16,9 +16,6 @@ This was driven out of the need for a reliable and repeatable way to drive BMCs.
 As such it uses CLI tools like SSH/racadm rather than web based APIs such as redshift.
 I found redshift APIs to be totally unreliable and thus results were not repeatable.
 
-At the moment this does not work, this is simply a WIP commit, a shell for what will come.
-I'm basing this of the work I did with vamp:
-
 https://github.com/lateralblast/vamp
 
 Usage
