@@ -5,7 +5,7 @@
     serial_enable:      "1"
     idrac_username:     "root"
     idrac_password:     "calvin"
-    execute_get:        "no"
+    execute_get:        "yes"
     execute_set:        "no"
     idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
 
@@ -19,9 +19,9 @@
 #    - include: idrac/rac_set_new.yaml
 #    - include: idrac/rac_set_old.yaml
 #    - include: idrac/ssh_get_new.yaml
-#    - include: idrac/ssh_get_new_ssh_key.yaml
+    - include: idrac/ssh_get_new_ssh_key.yaml
 #    - include: idrac/ssh_get_old.yaml
-    - include: idrac/ssh_get_old_ssh_key.yaml
+#    - include: idrac/ssh_get_old_ssh_key.yaml
 #    - include: idrac/ssh_set_new.yaml
 #    - include: idrac/ssh_set_new_ssh_key.yaml
 #    - include: idrac/ssh_set_old.yaml

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.0.8
+# Version:      0.1.0
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -176,12 +176,15 @@ def get_set_idrac_value(module, switches):
         command = "%s %s" % (command, module.params['subfunction'])
       if not module.params['action'] == None:
         command = "%s %s" % (command, module.params['action'])
-      for key,value in switches:
+      if not module.params['object'] == None:
+        command = "%s %s" % (command, module.params['object'])
+      for key, value in switches.items():
         if not module.params[key] == None:
-          if re.search(r"true|yes", str(module.params[item]).lower()):
+          if re.search(r"^true$|^yes$", str(module.params[key]).lower()) or module.params[key] == True:
             command = "%s %s" % (command, value)
           else:
-            command = "%s %s %s" % (command, value, module.params[key])
+            if not re.search(r"^false$|^no$", str(module.params[key]).lower()) and not module.params[key] == False:
+              command = "%s %s%s" % (command, value, module.params[key])
     else:
       module = parse_group(module)
       if module.params['function'] == "set":
@@ -195,11 +198,16 @@ def get_set_idrac_value(module, switches):
       command = "racadm %s" % (command)
     if module.params['method'] == "ssh":
       if module.params['usesshkey'] == True:
-        command = "ssh -o StrictHostKeyChecking=no %s@%s -i %s '%s'" % (module.params['bmcusername'], module.params['bmchostname'], module.params['sshkeyfile'], command)
+        command = "ssh -o StrictHostKeyChecking=no -i %s %s@%s '%s'" % (module.params['sshkeyfile'], module.params['bmcusername'], module.params['bmchostname'], command)
         process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         output  = process.stdout
-        output  = output.split("\n")[0]
-        output  = output.split("\r")[0]
+        if module.params['function'] == "get":
+          if module.params['objectgroup'] == None:
+            output = output.split("\n")[1]
+          else:
+            output  = output.split("\n")[0]
+        if re.search("=", output):
+          output = output.split("=")[1]
         return(output, process.stderr, process.returncode, command, subroutine)
       else:
         ssh_session = start_ssh_session(module)
@@ -208,9 +216,14 @@ def get_set_idrac_value(module, switches):
         ssh_session.expect("/admin1-> ")
         output = ssh_session.before
         output = output.decode()
-        output = output.split("\n")[1]
-        output = output.split("\r")[1]
+        if module.params['function'] == "get":
+          if module.params['objectgroup'] == None:
+            output = output.split("\n")[1]
+          else:
+            output  = output.split("\n")[0]
         ssh_session.close()
+        if re.search("=", output):
+          output = output.split("=")[1]
         return(output, "", 0, command, subroutine)
     else:
       command = "racadm -r %s -u %s -p %s %s" % (module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
@@ -229,7 +242,7 @@ def main():
     'apply':                { 'default':  None,    'type': 'str' },
     'assign':               { 'default':  None,    'type': 'str' },
     'binarymode':           { 'default':  False,   'type': 'str' },
-    'blink':                { 'default':  False,   'type': 'str' },
+    'blink':                { 'default':  None,    'type': 'str' },
     'bmccommand':           { 'default':  None,    'type': 'str' },
     'bmchostname':          { 'default':  None,    'type': 'str' },
     'bmcpassword':          { 'default':  None,    'type': 'str' },
@@ -247,20 +260,26 @@ def main():
     'compact':              { 'default':  False,   'type': 'str' },
     'company':              { 'default':  None,    'type': 'str' },
     'component':            { 'default':  None,    'type': 'str' },
+    'connectimage':         { 'default':  False,   'type': 'str' },
     'converttononraid':     { 'default':  None,    'type': 'str' },
     'converttoraid':        { 'default':  None,    'type': 'str' },
     'count':                { 'default':  None,    'type': 'str' },
     'country':              { 'default':  None,    'type': 'str' },
-    'createsecuritykey':    { 'default':  False,   'type': 'str' },
-    'cryptographicerase':   { 'default':  False,   'type': 'str' },
+    'createsecuritykey':    { 'default':  None,   'type': 'str' },
+    'cryptographicerase':   { 'default':  None,   'type': 'str' },
     'current':              { 'default':  False,   'type': 'str' },
     'datetime':             { 'default':  False,   'type': 'str' },
     'dhcp':                 { 'default':  False,   'type': 'str' },
     'dhcp6':                { 'default':  False,   'type': 'str' },
     'discardcache':         { 'default':  None,    'type': 'str' },
+    'disconnectimage':      { 'default':  False,   'type': 'str' },
+    'displaycommon':        { 'default':  False,   'type': 'str' },
     'displaybios':          { 'default':  False,   'type': 'str' },
     'displaycpld':          { 'default':  False,   'type': 'str' },
     'displayidsdm':         { 'default':  False,   'type': 'str' },
+    'displayidrac':         { 'default':  False,   'type': 'str' },
+    'displayipv4':          { 'default':  False,   'type': 'str' },
+    'displayipv6':          { 'default':  False,   'type': 'str' },
     'displaynumber':        { 'default':  False,   'type': 'str' },
     'displayonlyraw':       { 'default':  False,   'type': 'str' },
     'displaytotal':         { 'default':  False,   'type': 'str' },
@@ -273,6 +292,8 @@ def main():
     'dow':                  { 'default':  None,    'type': 'str' },
     'downloadlocation':     { 'default':  None,    'type': 'str' },
     'dstpd':                { 'default':  None,    'type': 'str' },
+    'enable6':              { 'default':  False,   'type': 'str' },
+    'encryptvd':            { 'default':  None,    'type': 'str' },
     'entitlementid':        { 'default':  None,    'type': 'str' },
     'execute':              { 'default':  True,    'type': 'str' },
     'expirationtime':       { 'default':  None,    'type': 'str' },
@@ -337,6 +358,7 @@ def main():
     'preparetoremove':      { 'default':  None,    'type': 'str' },
     'propertyname':         { 'default':  None,    'type': 'str' },
     'proxyhostname':        { 'default':  None,    'type': 'str' },
+    'proxypassword':        { 'default':  None,    'type': 'str' },
     'proxyport':            { 'default':  None,    'type': 'str' },
     'proxytype':            { 'default':  None,    'type': 'str' },
     'proxyusername':        { 'default':  None,    'type': 'str' },
@@ -396,7 +418,7 @@ def main():
     'uid':                  { 'default':  None,    'type': 'str' },
     'unblink':              { 'default':  None,    'type': 'str' },
     'unlock':               { 'default':  None,    'type': 'str' },
-    'update':               { 'default':  False,    'type': 'str' },
+    'update':               { 'default':  False,   'type': 'str' },
     'userindex':            { 'default':  None,    'type': 'str' },
     'username':             { 'default':  None,    'type': 'str' },
     'usesshkey':            { 'default':  True,    'type': 'str' },
@@ -416,6 +438,180 @@ def main():
   command = ""
   subroutine = ""
 
+  if module.params['bmctype'] == "idrac":
+    switches = dict([
+    ('action',               '-a '),
+    ('alertcategory',        '-c '),
+    ('apply',                '-a '),
+    ('assign',               '-assign '),
+    ('binarymode',           '-b '),
+    ('blink',                'blink:'),
+    ('cancelbgi',            'cancelbgi:'),
+    ('cancelcheck',          'cancelcheck:'),
+    ('cancelrebuild',        'cancelrebuild:'),
+    ('capacityexpansion',    'capacityexpansion:'),
+    ('ccheck',               'ccheck:'),
+    ('certtype',             '-t '),
+    ('city',                 '-city '),
+    ('clearconfig',          'clearconfig:'),
+    ('closeallsessions',     '-a '),
+    ('compact',              '-c '),
+    ('company',              '-company '),
+    ('connectimage',         '-c '),
+    ('converttononraid',     'converttononraid:'),
+    ('converttoraid',        'converttoraid:'),
+    ('count',                '-c '),
+    ('country',              '-country '),
+    ('createsecuritykey',    'createsecuritykey:'),
+    ('cryptographicerase',   'cryptographicerase:'),
+    ('current',              '-current '),
+    ('datetime',             '-d '),
+    ('delete',               '-d '),
+    ('deletesecuritykey',    'deletesecuritykey:'),
+    ('deletevd',             'deletevd:'),
+    ('dhcp',                 '-d '),
+    ('dhcp6',                '-d6 '),
+    ('discardcache',         'discardcache:'),
+    ('disconnectimage',      '-d '),
+    ('diskcachepolicy',      '-dcp '),
+    ('displaybios',          '-b '),
+    ('displaycommon',        '-c '),
+    ('displaycpld',          '-c '),
+    ('displayidrac',         '-d '),
+    ('displayidsdm',         '-i '),
+    ('displayipv4',          '-4 '),
+    ('displayipv6',          '-6 '),
+    ('displaynumber',        '-d '),
+    ('displayonlyraw',       '-R '),
+    ('displayraw',           '-E '),
+    ('displaytotal',         '-i '),
+    ('dom',                  '-dom '),
+    ('dow',                  '-dow '),
+    ('downloadlocation',     '-d '),
+    ('dstpd',                '-dstpd '),
+    ('enable6',              '-o '),
+    ('encryptvd',            'encryptvd:'),
+    ('entitlementid',        '-e '),
+    ('expirationtime',       '-e '),
+    ('fqdds',                '-c '),
+    ('fqdd',                 '-fqdd '),
+    ('filename',             '-f '),
+    ('filter',               '-f '),
+    ('force',                '-f '),
+    ('forceoffline',         'forceoffline:'),
+    ('forceonline',          'forceonline:'),
+    ('forcereset',           '-f '),
+    ('format',               '-f '),
+    ('frequency',            '-s '),
+    ('get',                  '-g '),
+    ('groupname',            '-g '),
+    ('hotspare',             'hotspare:'),
+    ('ignoreheaders',        '-A '),
+    ('importconfig',         'importconfig:'),
+    ('index',                '-i '),
+    ('init',                 'init:'),
+    ('jobid',                '-i '),
+    ('jobindex',             '-i '),
+    ('key',                  '-key '),
+    ('keysubtype',           '-k '),
+    ('keyindex',             '-k '),
+    ('keytext',              '-t '),
+    ('keytype',              '-t '),
+    ('level',                '-level '),
+    ('ledstate',             '-l '),
+    ('location',             '-l '),
+    ('logtype',              '-t '),
+    ('mdtype',               '-mdtype '),
+    ('messageid',            '-i '),
+    ('mode',                 '-m '),
+    ('modifysecuritykey',    'modifysecuritykey:'),
+    ('module',               '-m '),
+    ('name',                 '-name '),
+    ('newpasswd',            '-newpasswd '),
+    ('newraidlevel',         '-new_rl '),
+    ('optimized',            '-o '),
+    ('outputfile',           '-f '),
+    ('outputtype',           '-t '),
+    ('override',             '-o '),
+    ('panumber',             '-panumber '),
+    ('passphrase',           '-p '),
+    ('passwd',               '-passwd '),
+    ('password',             '-p '),
+    ('patrolread',           'patrolread:'),
+    ('pcode',                '-pcode '),
+    ('pdkey',                '-pdkey:'),
+    ('pending',              '-pending '),
+    ('pfname',               '-pfname '),
+    ('plname',               '-plname '),
+    ('pmailid',              '-pmailid '),
+    ('pmnumber',             '-pmnumber '),
+    ('powerstate',           '-s '),
+    ('preparetoremove',      'preparetoremove'),
+    ('propertyname',         '-p '),
+    ('proxyhostname',        '-ph '),
+    ('proxypassword',        '-pp '),
+    ('proxyport',            '-po '),
+    ('proxytype',            '-po '),
+    ('proxyusername',        '-pu '),
+    ('put',                  '-p '),
+    ('raidlevel',            '-rl '),
+    ('raidlevelmigration',   'raidlevelmigration:'),
+    ('readpolicy',           '-rp '),
+    ('rebuild',              'rebuild:'),
+    ('recordperline',        '-o '),
+    ('records',              '-c '),
+    ('refkey',               '--refkey '),
+    ('rekey',                'rekey:'),
+    ('renamevd',             'renamevd:'),
+    ('replacephysicaldisk',  'replacephysicaldisk:'),
+    ('resetconfig',          'resetconfig:'),
+    ('rollback',             '-r '),
+    ('sanumber',             '-sanumber '),
+    ('sekmindex',            '-i '),
+    ('sekmserver1',          '-p '),
+    ('sekmserver2',          '-s '),
+    ('sessionid',            '-i '),
+    ('sessionusername',      '-i '),
+    ('setbootvd',            'setbootvd:'),
+    ('setencryptionmode',    'setencryptionmode:'),
+    ('sfname',               '-sfname '),
+    ('shutdowntype',         '-b '),
+    ('shareusername',        '-u '),
+    ('sharepassword',        '-p '),
+    ('sharelocation',        '-l '),
+    ('size',                 '-size '),
+    ('slname',               '-slname '),
+    ('smailid',              '-smailid '),
+    ('smnumber',             '-smnumber '),
+    ('speed',                '-speed '),
+    ('start',                '-s '),
+    ('start-date',           '-d '),
+    ('start-time',           '-t '),
+    ('starttime',            '-s '),
+    ('state',                '-state '),
+    ('static',               '-s '),
+    ('static6',              '-s6 '),
+    ('status',               '-s '),
+    ('street1',              '-street1 '),
+    ('street2',              '-street2 '),
+    ('stripesize',           '-ss '),
+    ('t10pienable',          '-T10PIEnable '),
+    ('tftpserver',           '-a '),
+    ('time',                 '-time '),
+    ('transactionid',        '-t '),
+    ('uid',                  '-uid '),
+    ('unblink',              'unblink:'),
+    ('unlock',               'unlock:'),
+    ('update',               '-u '),
+    ('username',             '-u '),
+    ('userindex',            '-i '),
+    ('vdkey',                '-vdkey:'),
+    ('view',                 '-v '),
+    ('waittime',             '-w '),
+    ('wom',                  '-wom '),
+    ('writepolicy',          '-wp '),
+    ('zip',                  '-zip')
+  ]) 
   if module.params['bmctype'] == None:
     if re.search("_", module._name):
       module.params['bmctype'] = module._name.split("_")[0] 
@@ -447,173 +643,6 @@ def main():
       else:
         module.params['usesshkey'] = True
 
-  if module.params['bmctype'] == "idrac":
-    switches = dict()
-    switches['action']              = "-a "
-    switches['alertcategory']       = "-c "
-    switches['apply']               = "-a "
-    switches['assign']              = "-assign "
-    switches['binarymode']          = "-b "
-    switches['blink']               = "blink:"
-    switches['bmchostname']         = "-r "
-    switches['cancelbgi']           = "cancelbgi:"
-    switches['cancelcheck']         = "cancelcheck:"
-    switches['cancelrebuild']       = "cancelrebuild:"
-    switches['capacityexpansion']   = "capacityexpansion:"
-    switches['ccheck']              = "ccheck:"
-    switches['certtype']            = "-t "
-    switches['city']                = "-city "
-    switches['clearconfig']         = "clearconfig:"
-    switches['closeallsessions']    = "-a "
-    switches['compact']             = "-c "
-    switches['company']             = "-company "
-    switches['connectimage']        = "-c "
-    switches['converttononraid']    = "converttononraid:"
-    switches['converttoraid']       = "converttoraid:"
-    switches['count']               = "-c "
-    switches['country']             = "-country "
-    switches['createsecuritykey']   = "createsecuritykey:"
-    switches['cryptographicerase']  = "cryptographicerase:"
-    switches['current']             = "-current "
-    switches['datetime']            = "-d "
-    switches['delete']              = "-d "
-    switches['deletesecuritykey']   = "deletesecuritykey:"
-    switches['deletevd']            = "deletevd:"
-    switches['dhcp']                = "-d "
-    switches['dhcp6']               = "-d6 "
-    switches['discardcache']        = "discardcache:"
-    switches['disconnectimage']     = "-d "
-    switches['diskcachepolicy']     = "-dcp "
-    switches['displaynumber']       = "-d "
-    switches['displayonlyraw']      = "-R "
-    switches['displayraw']          = "-E "
-    switches['displaytotal']        = "-i "
-    switches['dom']                 = "-dom "
-    switches['dow']                 = "-dow "
-    switches['downloadlocation']    = "-d "
-    switches['dstpd']               = "-dstpd "
-    switches['enable6']             = "-o "
-    switches['encryptvd']           = "encryptvd:"
-    switches['entitlementid']       =  "-e "
-    switches['expirationtime']      = "-e "
-    switches['fqdds']               = "-c "
-    switches['fqdd']                = "-fqdd "
-    switches['filename']            = "-f "
-    switches['filter']              = "-f "
-    switches['force']               = "-f "
-    switches['forceoffline']        = "forceoffline:"
-    switches['forceonline']         = "forceonline:"
-    switches['forcereset']          = "-f "
-    switches['format']              = "-f "
-    switches['frequency']           = "-s "
-    switches['get']                 = "-g "
-    switches['groupname']           = "-g "
-    switches['hotspare']            = "hotspare:"
-    switches['ignoreheaders']       = "-A "
-    switches['importconfig']        = "importconfig:"
-    switches['index']               = "-i "
-    switches['init']                = "init:"
-    switches['jobid']               = "-i "
-    switches['jobindex']            = "-i "
-    switches['key']                 = "-key "
-    switches['keysubtype']          = "-k "
-    switches['keyindex']            = "-k "
-    switches['keytext']             = "-t "
-    switches['keytype']             = "-t "
-    switches['level']               = "-level "
-    switches['ledstate']            = "-l "
-    switches['location']            = "-l "
-    switches['logtype']             = "-t "
-    switches['mdtype']              = "-mdtype "
-    switches['messageid']           = "-i "
-    switches['mode']                = "-m "
-    switches['modifysecuritykey']   = "modifysecuritykey:"
-    switches['module']              = "-m "
-    switches['name']                = "-name "
-    switches['newpasswd']           = "-newpasswd "
-    switches['newraidlevel']        = "-new_rl "
-    switches['optimized']           = "-o "
-    switches['outputfile']          = "-f "
-    switches['outputtype']          = "-t "
-    switches['override']            = "-o "
-    switches['panumber']            = "-panumber "
-    switches['passphrase']          = "-p "
-    switches['passwd']              = "-passwd "
-    switches['password']            = "-p "
-    switches['patrolread']          = "patrolread:"
-    switches['pcode']               = "-pcode "
-    switches['pdkey']               = "-pdkey:"
-    switches['pending']             = "-pending "
-    switches['pfname']              = "-pfname "
-    switches['plname']              = "-plname "
-    switches['pmailid']             = "-pmailid "
-    switches['pmnumber']            = "-pmnumber "
-    switches['powerstate']          = "-s "
-    switches['preparetoremove']     = "preparetoremove"
-    switches['propertyname']        = "-p "
-    switches['proxyhostname']       = "-ph "
-    switches['proxypassword']       = "-pp "
-    switches['proxyport']           = "-po "
-    switches['proxytype']           = "-po "
-    switches['proxyusername']       = "-pu "
-    switches['put']                 = "-p "
-    switches['raidlevel']           = "-rl "
-    switches['raidlevelmigration']  = "raidlevelmigration:"
-    switches['readpolicy']          = "-rp "
-    switches['rebuild']             = "rebuild:"
-    switches['recordperline']       = "-o "
-    switches['records']             = "-c "
-    switches['refkey']              = "--refkey "
-    switches['rekey']               = "rekey:"
-    switches['renamevd']            = "renamevd:"
-    switches['replacephysicaldisk'] = "replacephysicaldisk:"
-    switches['resetconfig']         = "resetconfig:"
-    switches['rollbackt']           = "-r "
-    switches['sanumber']            = "-sanumber "
-    switches['sekmindex']           = "-i "
-    switches['sekmserver1']         = "-p "
-    switches['sekmserver2']         = "-s "
-    switches['sessionid']           = "-i "
-    switches['sessionusername']     = "-i "
-    switches['setbootvd']           = "setbootvd:"
-    switches['setencryptionmode']   = "setencryptionmode:"
-    switches['sfname']              = "-sfname "
-    switches['shutdowntype']        = "-b "
-    switches['shareusername']       = "-u "
-    switches['sharepassword']       = "-p "
-    switches['sharelocation']       = "-l "
-    switches['size']                = "-size "
-    switches['slname']              = "-slname "
-    switches['smailid']             = "-smailid "
-    switches['smnumber']            = "-smnumber "
-    switches['speed']               = "-speed "
-    switches['start']               = "-s "
-    switches['start-date']          = "-d "
-    switches['start-time']          = "-t "
-    switches['starttime']           = "-s "
-    switches['state']               = "-state "
-    switches['static']              = "-s "
-    switches['static6']             = "-s6 "
-    switches['status']              = "-s "
-    switches['street1']             = "-street1 "
-    switches['street2']             = "-street2 "
-    switches['stripesize']          = "-ss "
-    switches['t10pienable']         = "-T10PIEnable "
-    switches['tftpserver']          = "-a "
-    switches['time']                = "-time "
-    switches['transactionid']       = "-t "
-    switches['uid']                 = "-uid "
-    switches['unblink']             = "unblink:"
-    switches['unlock']              = "unlock:"
-    switches['update']              = "-u "
-    switches['username']            = "-u "
-    switches['userindex']           = "-i "
-    switches['vdkey']               = "-vdkey:"
-    switches['view']                = "-v "
-    switches['waittime']            = "-w "
-    switches['wom']                 = "-wom "
-    switches['writepolicy']         = "-wp "
-    switches['zip']                 = "-zip "
     if module.params['method'] == "ssh":
       (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
 
