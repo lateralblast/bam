@@ -16,6 +16,8 @@ This was driven out of the need for a reliable and repeatable way to drive BMCs.
 As such it uses CLI tools like SSH/racadm rather than web based APIs such as redshift.
 I found redshift APIs to be totally unreliable and thus results were not repeatable.
 
+This module is based somewhat on my previous generic virtualisation ansible module:
+
 https://github.com/lateralblast/vamp
 
 This is Ansible module is designed to be generic and extensible.
