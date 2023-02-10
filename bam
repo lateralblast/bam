@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.1.0
+# Version:      0.1.3
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -139,12 +139,16 @@ EXAMPLES = r'''
 # Initiate SSH Session
 
 def start_ssh_session(module):
-  ssh_command = "ssh -o StrictHostKeyChecking=no"
-  ssh_command = "%s %s@%s" % (ssh_command, module.params['bmcusername'], module.params['bmchostname'])
-  ssh_session = pexpect.spawn(ssh_command)
-  ssh_session.expect("assword: ")
-  ssh_session.sendline(module.params['bmcpassword'])
-  return(ssh_session)
+  if module.params['usesshkey'] == True:
+    ssh_command = "ssh -o StrictHostKeyChecking=no -i %s %s@%s" % (module.params['sshkeyfile'], module.params['bmcusername'], module.params['bmchostname'])
+    ssh_session = pexpect.spawn(ssh_command)
+  else:
+    ssh_command = "ssh -o StrictHostKeyChecking=no"
+    ssh_command = "%s %s@%s" % (ssh_command, module.params['bmcusername'], module.params['bmchostname'])
+    ssh_session = pexpect.spawn(ssh_command)
+    ssh_session.expect("assword: ")
+    ssh_session.sendline(module.params['bmcpassword'])
+  return(ssh_session, ssh_command)
 
 # Parse simplified group tags
 
@@ -197,34 +201,34 @@ def get_set_idrac_value(module, switches):
     if not module.params['function'] == "execute":
       command = "racadm %s" % (command)
     if module.params['method'] == "ssh":
-      if module.params['usesshkey'] == True:
-        command = "ssh -o StrictHostKeyChecking=no -i %s %s@%s '%s'" % (module.params['sshkeyfile'], module.params['bmcusername'], module.params['bmchostname'], command)
-        process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        output  = process.stdout
-        if module.params['function'] == "get":
-          if module.params['objectgroup'] == None:
-            output = output.split("\n")[1]
-          else:
-            output  = output.split("\n")[0]
-        if re.search("=", output):
-          output = output.split("=")[1]
-        return(output, process.stderr, process.returncode, command, subroutine)
-      else:
-        ssh_session = start_ssh_session(module)
-        ssh_session.expect("/admin1-> ")
-        ssh_session.sendline(command)
-        ssh_session.expect("/admin1-> ")
-        output = ssh_session.before
-        output = output.decode()
-        if module.params['function'] == "get":
-          if module.params['objectgroup'] == None:
-            output = output.split("\n")[1]
-          else:
-            output  = output.split("\n")[0]
-        ssh_session.close()
-        if re.search("=", output):
-          output = output.split("=")[1]
-        return(output, "", 0, command, subroutine)
+      (ssh_session, ssh_command) = start_ssh_session(module)
+      ssh_session.expect("/admin1-> ")
+      ssh_session.sendline(command)
+      ssh_session.expect("/admin1-> ")
+      output = ssh_session.before
+      output = output.decode()
+      output = output.replace("\r", "")
+      full_command = "%s '%s'" % (ssh_command, command)
+      if re.search(r"RAC1168", str(output)):
+        output = output.split("\n")
+        output = output[0:-7]
+        output = "\n".join(output)
+      if not module.params['search'] == None:
+        regex = r"\b(?=\w)" + re.escape(module.params['search']) + r"\b(?!\w)"
+        for line in output.split("\n"):
+          if re.search(regex, line, re.IGNORECASE):
+            return(line, "", 0, full_command, subroutine)
+      if not module.params['searchforvalue'] == None:
+        regex = r"\b(?=\w)" + re.escape(module.params['searchforvalue']) + r"\b(?!\w)"
+        for line in output.split("\n"):
+          if re.search(regex, line, re.IGNORECASE):
+            if re.search(r"=", line):
+              value = str(line)
+              value = line.split("=")[1]
+              value = re.sub(r"^\s+", "", value)
+              value = re.sub(r"\s+$", "", value)
+            return(value, "", 0, full_command, subroutine)
+      return(output, "", 0, full_command, subroutine)
     else:
       command = "racadm -r %s -u %s -p %s %s" % (module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
       process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -265,8 +269,8 @@ def main():
     'converttoraid':        { 'default':  None,    'type': 'str' },
     'count':                { 'default':  None,    'type': 'str' },
     'country':              { 'default':  None,    'type': 'str' },
-    'createsecuritykey':    { 'default':  None,   'type': 'str' },
-    'cryptographicerase':   { 'default':  None,   'type': 'str' },
+    'createsecuritykey':    { 'default':  None,    'type': 'str' },
+    'cryptographicerase':   { 'default':  None,    'type': 'str' },
     'current':              { 'default':  False,   'type': 'str' },
     'datetime':             { 'default':  False,   'type': 'str' },
     'dhcp':                 { 'default':  False,   'type': 'str' },
@@ -378,6 +382,8 @@ def main():
     'resetconfig':          { 'default':  None,    'type': 'str' },
     'rollback':             { 'default':  False,   'type': 'str' },
     'sanumber':             { 'default':  None,    'type': 'str' },
+    'search':               { 'default':  None,    'type': 'str' },
+    'searchforvalue':       { 'default':  None,    'type': 'str' },
     'sekmindex':            { 'default':  None,    'type': 'str' },
     'sekmindex':            { 'default':  None,    'type': 'str' },
     'sekmserver1':          { 'default':  None,    'type': 'str' },
@@ -646,6 +652,10 @@ def main():
     if module.params['method'] == "ssh":
       (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
 
+  if not stderr:
+    stderr = ""
+  if not stdout:
+    stdout = ""
   if len(stdout) == 0 and len(stderr) > 0:
     stdout = stderr
 

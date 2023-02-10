@@ -11,6 +11,8 @@
 
   connection: local
   become: True
+#  Enable this when not debugging so that no passwords are logged
+#  no_log: True
 
   tasks:
     - include: python/modules.yaml

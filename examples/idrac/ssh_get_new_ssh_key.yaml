@@ -1,32 +1,33 @@
-- name: Get iDRAC object value via ssh using newer method
+#- name: Get iDRAC object value via ssh using newer method
+#  bam:
+#    bmctype:      idrac
+#    method:       ssh 
+#    bmchostname:  "{{ ansible_host }}"
+#    bmcusername:  "{{ idrac_username }}"
+#    usesshkey:    true
+#    sshkeyfile:   "{{idrac_sshkey_file}}"
+#    object:       iDRAC.IPv4.Address
+#    function:     get
+#    execute:      "{{ execute_get }}"
+#- name: Get iDRAC object value via ssh using newer method
+#  bam:
+#    bmctype:      idrac
+#    method:       ssh
+#    bmchostname:  "{{ ansible_host }}"
+#    bmcusername:  "{{ idrac_username }}"
+#    usesshkey:    true
+#    sshkeyfile:   "{{idrac_sshkey_file}}"
+#    object:       iDRAC.OS-BMC.AdminState
+#    function:     get
+#    execute:      "{{ execute_get }}"
+- name: Get Gateway references from iDRAC Network config via ssh using newer method
   bam:
-    bmctype:      idrac
-    method:       ssh 
-    bmchostname:  "{{ ansible_host }}"
-    bmcusername:  "{{ idrac_username }}"
-    usesshkey:    true
-    sshkeyfile:   "{{idrac_sshkey_file}}"
-    object:       iDRAC.IPv4.Address
-    function:     get
-    execute:      "{{ execute_get }}"
-- name: Get iDRAC object value via ssh using newer method
-  bam:
-    bmctype:      idrac
-    method:       ssh
-    bmchostname:  "{{ ansible_host }}"
-    bmcusername:  "{{ idrac_username }}"
-    usesshkey:    true
-    sshkeyfile:   "{{idrac_sshkey_file}}"
-    object:       iDRAC.OS-BMC.AdminState
-    function:     get
-    execute:      "{{ execute_get }}"
-- name: Get iDRAC Network config
-  bam:
-    bmctype:      idrac
-    method:       ssh
-    bmchostname:  "{{ ansible_host }}"
-    bmcusername:  "{{ idrac_username }}"
-    usesshkey:    true
-    sshkeyfile:   "{{idrac_sshkey_file}}"
-    function:     gethostnetworkinterfaces
-    execute:      "{{ execute_get }}"
+    bmctype:          idrac
+    method:           ssh
+    bmchostname:      "{{ ansible_host }}"
+    bmcusername:      "{{ idrac_username }}"
+    usesshkey:        true
+    sshkeyfile:       "{{idrac_sshkey_file}}"
+    function:         getniccfg
+    searchforvalue:   "Gateway"
+    execute:          "{{ execute_get }}"

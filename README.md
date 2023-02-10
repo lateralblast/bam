@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.1.0
+Version: 0.1.3
 
 Introduction
 ------------
@@ -17,6 +17,13 @@ As such it uses CLI tools like SSH/racadm rather than web based APIs such as red
 I found redshift APIs to be totally unreliable and thus results were not repeatable.
 
 https://github.com/lateralblast/vamp
+
+This is Ansible module is designed to be generic and extensible.
+Other platforms can be relatively easily added if needed, for example ILOMs, ILOs etc.
+
+I'll probably add support for Intel IME/AMT via web calls like I've done here:
+
+https://github.com/lateralblast/goat
 
 Usage
 -----
@@ -56,7 +63,7 @@ The newer method of enabling IPMI over LAN uses the following method:
 racadm get iDRAC.IPMILan.Enable Enabled
 ```
 
-To address this, if the group tag is used, it will assume the older method.
+To address this, if the objectgroup tag is used, it will assume the older method.
 
 For example an Ansible stanza that would force/use the first method:
 
@@ -69,7 +76,7 @@ For example an Ansible stanza that would force/use the first method:
     bmcusername:  root
     bmcpassword:  calvin
     function:     set
-    group:        cfgIpmiLan
+    objectgroup:  cfgIpmiLan
     object:       cfgIpmiLanEnable
     value:        1
 ```
@@ -85,12 +92,68 @@ An example Ansible stanza that would force/use the newer method:
     bmcusername:  root
     bmcpassword:  calvin
     function:     set
-    object:       iDRAC.IPMILan.Enable
+    objectgroup:  iDRAC.IPMILan.Enable
     value:        Enabled
 ```
 
 Support for SSH also exists allowing the use of keys. 
 When using SSH as the method, if no password is given, it will be assumed SSH keys are being used.
+
+Features
+--------
+
+Search
+======
+
+To help with processing infomration, I've added a couple of search function tags.
+
+The "search" tag with return any references to a term. 
+
+For example to return any reference to Gateway from the getniccfg command:
+
+```
+- name: Get Gateway references from iDRAC Network config via ssh using newer method
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ idrac_username }}"
+    usesshkey:    true
+    sshkeyfile:   "{{idrac_sshkey_file}}"
+    function:     getniccfg
+    search:       "Gateway"
+    execute:      "{{ execute_get }}"
+```
+
+This will return:
+
+```
+Gateway              = 192.168.11.254
+```
+
+In order to assist with processing, I've added a "searchforvalue" tag with will attempt to clean up the ouput and only return the value.
+
+For example
+
+```
+- name: Get Gateway references from iDRAC Network config via ssh using newer method
+  bam:
+    bmctype:          idrac
+    method:           ssh
+    bmchostname:      "{{ ansible_host }}"
+    bmcusername:      "{{ idrac_username }}"
+    usesshkey:        true
+    sshkeyfile:       "{{idrac_sshkey_file}}"
+    function:         getniccfg
+    searchforvalue:   "Gateway"
+    execute:          "{{ execute_get }}"
+```
+
+This will return:
+
+```
+192.168.11.254
+```
 
 Debugging
 =========
