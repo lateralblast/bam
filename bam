@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.1.4
+# Version:      0.1.5
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -19,7 +19,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 import subprocess
-import pexpect
 import inspect
 import ssl
 import os
@@ -177,13 +176,77 @@ def start_web_session():
   web_session = webdriver.Firefox(options=options)
   return web_session
 
-# Get/set AMT value
+# Set AMT value
 
-def get_set_amt_value(module):
-  result = ""
+def set_amt_value(module):
+  subroutine = inspect.stack()[0][3]
   import lxml
   from bs4 import BeautifulSoup
+  result = ""
+  base_url = "%s://%s:%s@%s:%s" % (module.params['method'], module.params['bmcusername'], module.params['bmcpassword'], module.params['bmchostname'], module.params['bmcport'])
+  web_session = start_web_session()
+  if not module.params['hostname'] == None or not module.params['domainname'] == None:
+    full_url = "%s/fqdn.htm" % (base_url)
+    if not module.params['hostname'] == None:
+      search = "HostName"
+      web_session.get(full_url)
+      from selenium.webdriver.common.by import By
+      field = web_session.find_element_by_name(search)
+      field.clear()
+      field.send_keys(module.params['hostname'])
+      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+    if not module.params['domainname'] == None:
+      search = "DomainName"
+      web_session.get(full_url)
+      from selenium.webdriver.common.by import By
+      field = web_session.find_element_by_name(search)
+      field.clear()
+      field.send_keys(module.params['domainname'])
+      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+  if not module.params['primarydns'] == None or not module.params['secondarydns'] == None:
+    full_url = "%s/ip.htm" % (base_url)
+    if not module.params['primarydns'] == None:
+      search = "DNSServer"
+      web_session.get(full_url)
+      from selenium.webdriver.common.by import By
+      field = web_session.find_element_by_name(search)
+      field.clear()
+      field.send_keys(module.params['primarydns'])
+      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+    if not module.params['secondarydns'] == None:
+      search = "AlternativeDns"
+      web_session.get(full_url)
+      from selenium.webdriver.common.by import By
+      field = web_session.find_element_by_name(search)
+      field.clear()
+      field.send_keys(module.params['secondarydns'])
+      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+  if not module.params['power'] == None:
+    full_url = "%s/remote.htm" % (base_url)
+    if re.search(r"off", module.params['power']):
+      web_session.find_element_by_xpath('//input[@value="1"]').click()
+    if re.search(r"cycle", module.params['power']):
+      web_session.find_element_by_xpath('//input[@value="3"]').click()
+    if re.search(r"reset", module.params['power']):
+      web_session.find_element_by_xpath('//input[@value="4"]').click()
+    web_session.get(full_url)
+    from selenium.webdriver.common.by import By
+    web_session.find_element_by_xpath('//input[@value="Send Command"]').click()
+    time.sleep(2)
+    object = web_session.switch_to.alert
+    time.sleep(2)
+    object.accept()
+  web_session.quit()
+  return(result, "", 0, full_url, subroutine)
+
+
+# Get AMT value
+
+def get_amt_value(module):
   subroutine = inspect.stack()[0][3]
+  import lxml
+  from bs4 import BeautifulSoup
+  result = ""
   if module.params['objectgroup'] == "bios":
     module.params['objectgroup'] = "system"
     module.params['object'] = "bios"
@@ -442,6 +505,7 @@ def main():
     'diskcachepolicy':      { 'default':  None,    'type': 'str' },
     'displayraw':           { 'default':  False,   'type': 'str' },
     'dom':                  { 'default':  None,    'type': 'str' },
+    'domainname':           { 'default':  None,    'type': 'str' },
     'dow':                  { 'default':  None,    'type': 'str' },
     'downloadlocation':     { 'default':  None,    'type': 'str' },
     'dstpd':                { 'default':  None,    'type': 'str' },
@@ -507,7 +571,9 @@ def main():
     'plname':               { 'default':  None,    'type': 'str' },
     'pmailid':              { 'default':  None,    'type': 'str' },
     'pmnumber':             { 'default':  None,    'type': 'str' },
+    'power':                { 'default':  None,    'type': 'str' },
     'powerstate':           { 'default':  None,    'type': 'str' },
+    'primarydns':           { 'default':  None,    'type': 'str' },
     'preparetoremove':      { 'default':  None,    'type': 'str' },
     'propertyname':         { 'default':  None,    'type': 'str' },
     'proxyhostname':        { 'default':  None,    'type': 'str' },
@@ -533,7 +599,7 @@ def main():
     'sanumber':             { 'default':  None,    'type': 'str' },
     'search':               { 'default':  None,    'type': 'str' },
     'searchforvalue':       { 'default':  None,    'type': 'str' },
-    'sekmindex':            { 'default':  None,    'type': 'str' },
+    'secondarydns':         { 'default':  None,    'type': 'str' },
     'sekmindex':            { 'default':  None,    'type': 'str' },
     'sekmserver1':          { 'default':  None,    'type': 'str' },
     'sekmserver2':          { 'default':  None,    'type': 'str' },
@@ -700,6 +766,7 @@ def main():
     ('plname',               '-plname '),
     ('pmailid',              '-pmailid '),
     ('pmnumber',             '-pmnumber '),
+    ('power',                '-s '),
     ('powerstate',           '-s '),
     ('preparetoremove',      'preparetoremove'),
     ('propertyname',         '-p '),
@@ -797,9 +864,13 @@ def main():
       module.params['bmcport'] = "16992"
     else:
       module.params['bmcport'] = "16993"
-    (stdout, stderr, rc, command, subroutine) = get_set_amt_value(module)
+    if module.params['function'] == "set":
+      (stdout, stderr, rc, command, subroutine) = get_set_value(module)
+    else:
+      (stdout, stderr, rc, command, subroutine) = get_amt_value(module)
 
   if re.search(r"ssh",module.params['method']):
+    import pexpect
     if module.params['bmcpassword'] == None:
       module.params['usesshkey'] = True
     else:

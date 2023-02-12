@@ -7,7 +7,7 @@
     idrac_password:     "calvin"
     execute_get:        "yes"
     execute_set:        "no"
-#    idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
+    idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
 
   connection: local
   become: True
