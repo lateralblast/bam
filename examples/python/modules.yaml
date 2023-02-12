@@ -1,3 +1,12 @@
 - name: Install pexpect python module in ansible
   pip:
     name: pexpect
+- name: Install BS4 python module in ansible
+  pip:
+    name: BeautifulSoup4
+- name: Install selenium python module in ansible
+  pip:
+    name: selenium
+- name: Install lxml python module in ansible
+  pip:
+    name: lxml 

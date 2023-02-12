@@ -1,0 +1,11 @@
+- name: Get AMT object value via http(s)
+  bam:
+    bmctype:      amt
+    method:       http
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ amt_username }}"
+    bmcpassword:  "{{ amt_password }}"
+    objectgroup:  "system"     
+    object:       "model"
+    function:     get
+    execute:      "{{ execute_get }}"

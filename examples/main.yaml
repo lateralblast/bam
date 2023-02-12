@@ -1,13 +1,13 @@
 # Example ansible YAML file
 
-- hosts: idracs
+- hosts: idrac
   vars:
     serial_enable:      "1"
     idrac_username:     "root"
     idrac_password:     "calvin"
     execute_get:        "yes"
     execute_set:        "no"
-    idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
+#    idrac_sshkey_file:  "/home/user/.ssh/id_rsa"
 
   connection: local
   become: True
@@ -28,3 +28,19 @@
 #    - include: idrac/ssh_set_new_ssh_key.yaml
 #    - include: idrac/ssh_set_old.yaml
 #    - include: idrac/ssh_set_old_ssh_key.yaml
+
+- hosts: amt
+  vars:
+    amt_username:       "admin"
+    amt_password:       "P4$$w0rd"
+    execute_get:        "yes"
+    execute_set:        "no"
+
+  connection: local
+  become: True
+#  Enable this when not debugging so that no passwords are logged
+#  no_log: True
+
+  tasks:
+    - include: python/modules.yaml
+    - include: amt/amt_get.yaml
