@@ -23,7 +23,7 @@ https://github.com/lateralblast/vamp
 This is Ansible module is designed to be generic and extensible.
 Other platforms can be relatively easily added if needed, for example ILOMs, ILOs etc.
 
-I'll probably add support for Intel IME/AMT via web calls like I've done here:
+I'll added support for Intel IME/AMT via web calls like I've done here:
 
 https://github.com/lateralblast/goat
 
@@ -252,6 +252,22 @@ Set the Lifecyle Controller to collect system inventory on reset using SSH
     objectgroup:  LifecycleController.Embedded.1
     object:       LCAttributes.1#CollectSystemInventoryOnRestart
     value:        Enabled
+```
+
+Get the AMT system Model name from the System information
+
+```
+- name: Get AMT object value via http(s)
+  bam:
+    bmctype:      amt
+    method:       http
+    bmchostname:  "{{ ansible_host }}"
+    bmcusername:  "{{ amt_username }}"
+    bmcpassword:  "{{ amt_password }}"
+    objectgroup:  "system"     
+    object:       "model"
+    function:     get
+    execute:      "{{ execute_get }}"
 ```
 
 Detailed iDRAC Example
