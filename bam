@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.1.5
+# Version:      0.1.6
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -119,7 +119,7 @@ EXAMPLES = r'''
     bmchostname:  idrac001.net
     bmcusername:  root
     bmcpassword:  calvin
-    function:       set
+    function:     set
     objectgroup:  cfgIpmiLan
     object:       cfgIpmiLanEnable
     value:        1
@@ -130,7 +130,7 @@ EXAMPLES = r'''
     bmxhostname:  idrac001.net
     bmcusername:  root
     bmcpassword:  calvin
-    function:       set
+    function:     set
     object:       iDRAC.IPMILan.Enable
     value:        Enabled
 '''
@@ -406,6 +406,8 @@ def get_set_idrac_value(module, switches):
         command = "config -g %s -o %s %s" % (module.params['objectgroup'], module.params['object'], module.params['value'])
       else:
         command = "getconfig -g %s -o %s" % (module.params['objectgroup'], module.params['object'])
+  if not module.params['value'] == None:
+    command = "%s %s" % (command, module.params['value'])
   if not module.params['options'] == None:
     command = "%s %s" % (command, module.params['options'])
   if module.params['execute'] == True:
@@ -476,6 +478,7 @@ def main():
     'compact':              { 'default':  False,   'type': 'str' },
     'company':              { 'default':  None,    'type': 'str' },
     'component':            { 'default':  None,    'type': 'str' },
+    'connect':              { 'default':  False,   'type': 'str' },
     'connectimage':         { 'default':  False,   'type': 'str' },
     'converttononraid':     { 'default':  None,    'type': 'str' },
     'converttoraid':        { 'default':  None,    'type': 'str' },
@@ -485,9 +488,13 @@ def main():
     'cryptographicerase':   { 'default':  None,    'type': 'str' },
     'current':              { 'default':  False,   'type': 'str' },
     'datetime':             { 'default':  False,   'type': 'str' },
+    'delete':               { 'default':  False,   'type': 'str' },
+    'deletesecuritykey':    { 'default':  None,    'type': 'str' },
+    'deletevd':             { 'default':  None,    'type': 'str' },
     'dhcp':                 { 'default':  False,   'type': 'str' },
     'dhcp6':                { 'default':  False,   'type': 'str' },
     'discardcache':         { 'default':  None,    'type': 'str' },
+    'disconnect':           { 'default':  False,   'type': 'str' },
     'disconnectimage':      { 'default':  False,   'type': 'str' },
     'displaycommon':        { 'default':  False,   'type': 'str' },
     'displaybios':          { 'default':  False,   'type': 'str' },
@@ -499,9 +506,6 @@ def main():
     'displaynumber':        { 'default':  False,   'type': 'str' },
     'displayonlyraw':       { 'default':  False,   'type': 'str' },
     'displaytotal':         { 'default':  False,   'type': 'str' },
-    'delete':               { 'default':  False,   'type': 'str' },
-    'deletesecuritykey':    { 'default':  None,    'type': 'str' },
-    'deletevd':             { 'default':  None,    'type': 'str' },
     'diskcachepolicy':      { 'default':  None,    'type': 'str' },
     'displayraw':           { 'default':  False,   'type': 'str' },
     'dom':                  { 'default':  None,    'type': 'str' },
@@ -554,11 +558,11 @@ def main():
     'newraidlevel':         { 'default':  None,    'type': 'str' },
     'object':               { 'default':  None,    'type': 'str' },
     'objectgroup':          { 'default':  None,    'type': 'str' },
-    'override':             { 'default':  False,   'type': 'str' },
     'optimized':            { 'default':  False,   'type': 'str' },
     'options':              { 'default':  None,    'type': 'str' },
     'outputfile':           { 'default':  None,    'type': 'str' },
     'outputtype':           { 'default':  None,    'type': 'str' },
+    'override':             { 'default':  False,   'type': 'str' },
     'panumber':             { 'default':  None,    'type': 'str' },
     'passphrase':           { 'default':  None,    'type': 'str' },
     'passwd':               { 'default':  None,    'type': 'str' },
@@ -675,59 +679,61 @@ def main():
     ('certtype',             '-t '),
     ('city',                 '-city '),
     ('clearconfig',          'clearconfig:'),
-    ('closeallsessions',     '-a '),
-    ('compact',              '-c '),
+    ('closeallsessions',     '-a'),
+    ('compact',              '-c'),
     ('company',              '-company '),
-    ('connectimage',         '-c '),
+    ('connect',              '-c'),
+    ('connectimage',         '-c'),
     ('converttononraid',     'converttononraid:'),
     ('converttoraid',        'converttoraid:'),
     ('count',                '-c '),
     ('country',              '-country '),
     ('createsecuritykey',    'createsecuritykey:'),
     ('cryptographicerase',   'cryptographicerase:'),
-    ('current',              '-current '),
-    ('datetime',             '-d '),
-    ('delete',               '-d '),
+    ('current',              '-current'),
+    ('datetime',             '-d'),
+    ('delete',               '-d'),
     ('deletesecuritykey',    'deletesecuritykey:'),
     ('deletevd',             'deletevd:'),
-    ('dhcp',                 '-d '),
-    ('dhcp6',                '-d6 '),
+    ('dhcp',                 '-d'),
+    ('dhcp6',                '-d6'),
     ('discardcache',         'discardcache:'),
-    ('disconnectimage',      '-d '),
+    ('disconnect',           '-d'),
+    ('disconnectimage',      '-d'),
     ('diskcachepolicy',      '-dcp '),
-    ('displaybios',          '-b '),
-    ('displaycommon',        '-c '),
-    ('displaycpld',          '-c '),
-    ('displayidrac',         '-d '),
-    ('displayidsdm',         '-i '),
-    ('displayipv4',          '-4 '),
-    ('displayipv6',          '-6 '),
-    ('displaynumber',        '-d '),
-    ('displayonlyraw',       '-R '),
-    ('displayraw',           '-E '),
-    ('displaytotal',         '-i '),
+    ('displaybios',          '-b'),
+    ('displaycommon',        '-c'),
+    ('displaycpld',          '-c'),
+    ('displayidrac',         '-d'),
+    ('displayidsdm',         '-i'),
+    ('displayipv4',          '-4'),
+    ('displayipv6',          '-6'),
+    ('displaynumber',        '-d'),
+    ('displayonlyraw',       '-R'),
+    ('displayraw',           '-E'),
+    ('displaytotal',         '-i'),
     ('dom',                  '-dom '),
     ('dow',                  '-dow '),
     ('downloadlocation',     '-d '),
     ('dstpd',                '-dstpd '),
-    ('enable6',              '-o '),
+    ('enable6',              '-o'),
     ('encryptvd',            'encryptvd:'),
     ('entitlementid',        '-e '),
     ('expirationtime',       '-e '),
-    ('fqdds',                '-c '),
-    ('fqdd',                 '-fqdd '),
     ('filename',             '-f '),
     ('filter',               '-f '),
-    ('force',                '-f '),
+    ('force',                '-f'),
     ('forceoffline',         'forceoffline:'),
     ('forceonline',          'forceonline:'),
-    ('forcereset',           '-f '),
+    ('forcereset',           '-f'),
     ('format',               '-f '),
+    ('fqdds',                '-c'),
+    ('fqdd',                 '-fqdd '),
     ('frequency',            '-s '),
     ('get',                  '-g '),
     ('groupname',            '-g '),
     ('hotspare',             'hotspare:'),
-    ('ignoreheaders',        '-A '),
+    ('ignoreheaders',        '-A'),
     ('importconfig',         'importconfig:'),
     ('index',                '-i '),
     ('init',                 'init:'),
@@ -750,10 +756,10 @@ def main():
     ('name',                 '-name '),
     ('newpasswd',            '-newpasswd '),
     ('newraidlevel',         '-new_rl '),
-    ('optimized',            '-o '),
+    ('optimized',            '-o'),
     ('outputfile',           '-f '),
     ('outputtype',           '-t '),
-    ('override',             '-o '),
+    ('override',             '-o'),
     ('panumber',             '-panumber '),
     ('passphrase',           '-p '),
     ('passwd',               '-passwd '),
@@ -761,7 +767,7 @@ def main():
     ('patrolread',           'patrolread:'),
     ('pcode',                '-pcode '),
     ('pdkey',                '-pdkey:'),
-    ('pending',              '-pending '),
+    ('pending',              '-pending'),
     ('pfname',               '-pfname '),
     ('plname',               '-plname '),
     ('pmailid',              '-pmailid '),
@@ -775,8 +781,8 @@ def main():
     ('proxyport',            '-po '),
     ('proxytype',            '-po '),
     ('proxyusername',        '-pu '),
-    ('put',                  '-p '),
-    ('raidlevel',            '-rl '),
+    ('put',                  '-p'),
+    ('raidlevel',            '-rl'),
     ('raidlevelmigration',   'raidlevelmigration:'),
     ('readpolicy',           '-rp '),
     ('rebuild',              'rebuild:'),
@@ -787,7 +793,7 @@ def main():
     ('renamevd',             'renamevd:'),
     ('replacephysicaldisk',  'replacephysicaldisk:'),
     ('resetconfig',          'resetconfig:'),
-    ('rollback',             '-r '),
+    ('rollback',             '-r'),
     ('sanumber',             '-sanumber '),
     ('sekmindex',            '-i '),
     ('sekmserver1',          '-p '),
@@ -811,24 +817,24 @@ def main():
     ('start-time',           '-t '),
     ('starttime',            '-s '),
     ('state',                '-state '),
-    ('static',               '-s '),
-    ('static6',              '-s6 '),
-    ('status',               '-s '),
+    ('static',               '-s'),
+    ('static6',              '-s6'),
+    ('status',               '-s'),
     ('street1',              '-street1 '),
     ('street2',              '-street2 '),
     ('stripesize',           '-ss '),
-    ('t10pienable',          '-T10PIEnable '),
+    ('t10pienable',          '-T10PIEnable'),
     ('tftpserver',           '-a '),
     ('time',                 '-time '),
     ('transactionid',        '-t '),
     ('uid',                  '-uid '),
     ('unblink',              'unblink:'),
     ('unlock',               'unlock:'),
-    ('update',               '-u '),
+    ('update',               '-u'),
     ('username',             '-u '),
     ('userindex',            '-i '),
     ('vdkey',                '-vdkey:'),
-    ('view',                 '-v '),
+    ('view',                 '-v'),
     ('waittime',             '-w '),
     ('wom',                  '-wom '),
     ('writepolicy',          '-wp '),
@@ -879,7 +885,7 @@ def main():
       else:
         module.params['usesshkey'] = True
 
-    if module.params['method'] == "ssh" and module.params('type') == "idrac":
+    if module.params['method'] == "ssh" and module.params['bmctype'] == "idrac":
       (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
 
   if not stderr:

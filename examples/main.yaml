@@ -21,13 +21,14 @@
 #    - include: idrac/rac_set_new.yaml
 #    - include: idrac/rac_set_old.yaml
 #    - include: idrac/ssh_get_new.yaml
-    - include: idrac/ssh_get_new_ssh_key.yaml
+#    - include: idrac/ssh_get_new_ssh_key.yaml
 #    - include: idrac/ssh_get_old.yaml
 #    - include: idrac/ssh_get_old_ssh_key.yaml
 #    - include: idrac/ssh_set_new.yaml
 #    - include: idrac/ssh_set_new_ssh_key.yaml
 #    - include: idrac/ssh_set_old.yaml
 #    - include: idrac/ssh_set_old_ssh_key.yaml
+    - include: idrac/ssh_boot_from_iso_via_nfs.yaml
 
 - hosts: amt
   vars:

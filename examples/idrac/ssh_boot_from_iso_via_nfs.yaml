@@ -1,0 +1,60 @@
+- name: Disconnect existing remote image via ssh
+  bam:
+    bmctype:        idrac
+    method:         ssh
+    bmchostname:    "{{ ansible_host }}"
+    bmcusername:    "{{ idrac_username }}"
+    usesshkey:      true
+    sshkeyfile:     "{{idrac_sshkey_file}}"
+    disconnect:     true        
+    function:       remoteimage 
+    execute:        "{{ execute_set }}"
+- name: Connect remote image from NFS mount via ssh
+  bam:
+    bmctype:        idrac
+    method:         ssh
+    bmchostname:    "{{ ansible_host }}"
+    bmcusername:    "{{ idrac_username }}"
+    usesshkey:      true
+    sshkeyfile:     "{{idrac_sshkey_file}}"
+    connect:        true        
+    location:       "192.168.11.67:/export/isos/ubuntu-22.04.1-live-server-amd64-autoinstall.iso"
+    function:       remoteimage 
+    execute:        "{{ execute_set }}"
+- name: Set Server to Boot flag to once via ssh
+  bam:
+    bmctype:       idrac
+    method:         ssh
+    bmchostname:    "{{ ansible_host }}"
+    bmcusername:    "{{ idrac_username }}"
+    usesshkey:      true
+    sshkeyfile:     "{{idrac_sshkey_file}}"
+    objectgroup:    cfgServerInfo
+    object:         cfgServerBootOnce
+    value:          1
+    action:         set
+    execute:        "{{ execute_set }}"
+- name: Set Server to Boot from virtual CD via ssh
+  bam:
+    bmctype:        idrac
+    method:         ssh
+    bmchostname:    "{{ ansible_host }}"
+    bmcusername:    "{{ idrac_username }}"
+    usesshkey:      true
+    sshkeyfile:     "{{idrac_sshkey_file}}"
+    objectgroup:    cfgServerInfo
+    object:         cfgServerFirstBootDevice
+    value:          VCD-DVD
+    action:         set
+    execute:        "{{ execute_set }}"
+- name: Powercycle server
+  bam:
+    bmctype:        idrac
+    method:         ssh
+    bmchostname:    "{{ ansible_host }}"
+    bmcusername:    "{{ idrac_username }}"
+    usesshkey:      true
+    sshkeyfile:     "{{idrac_sshkey_file}}"
+    function:       serveraction
+    subfunction:    powercycle
+    execute:        "{{ execute_set }}"
