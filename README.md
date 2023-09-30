@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.2.0
+Version: 0.2.4
 
 Introduction
 ------------
@@ -117,7 +117,7 @@ Features
 --------
 
 Search
-======
+------
 
 To help with processing information, I've added a couple of search function tags.
 
@@ -188,7 +188,7 @@ ok: [HOSTNAME] => {
 ```
 
 Debugging
-=========
+---------
 
 I've added some additional modularity/flexible and debugging to the module.
 
@@ -300,7 +300,7 @@ Get the AMT system Model name from the System information
     execute:      "{{ execute_get }}"
 ```
 
-Detailed iDRAC Example
-----------------------
+Detailed iDRAC Examples
+-----------------------
 
 Insert example(s) here...

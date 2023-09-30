@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.2.0
+# Version:      0.2.4
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -445,7 +445,14 @@ def get_set_idrac_value(module, switches):
             return(value, "", 0, full_command, subroutine)
       return(output, "", 0, full_command, subroutine)
     else:
-      command = "racadm -r %s -u %s -p %s %s" % (module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
+      if module.params['nocertwarn'] == True:
+        rac_command = "racadm --nocertwarn"
+      else:
+        if module.params['certcheck'] == True:
+          rac_command = "racadm -S"
+        else:
+          rac_command = "racadm"
+      command = "%s -r %s -u %s -p %s %s" % (rac_command, module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
       process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
       output  = process.stdout
       if not module.params['search'] == None:
@@ -463,6 +470,14 @@ def get_set_idrac_value(module, switches):
               value = re.sub(r"^\s+", "", value)
               value = re.sub(r"\s+$", "", value)
             return(value, "", 0, command, subroutine)
+      lines = output.split("\n")
+      if len(output) > 0:
+        output = []
+        for line in lines:
+          if len(line) > 0:
+            if re.search(r"[a-z]|[A-Z]|[0-9]", line):
+              output.append(line)
+        output = "\n".join(output)
       return(output, process.stderr, process.returncode, command, subroutine)
   else:
     return("", "", 0, command, subroutine)
@@ -476,7 +491,7 @@ def main():
     'alertcategory':        { 'default':  None,    'type': 'str' },
     'apply':                { 'default':  None,    'type': 'str' },
     'assign':               { 'default':  None,    'type': 'str' },
-    'binarymode':           { 'default':  False,   'type': 'str' },
+    'binarymode':           { 'default':  False,   'type': 'bool' },
     'blink':                { 'default':  None,    'type': 'str' },
     'bmccommand':           { 'default':  None,    'type': 'str' },
     'bmchostname':          { 'default':  None,    'type': 'str' },
@@ -492,66 +507,67 @@ def main():
     'certtype':             { 'default':  None,    'type': 'str' },
     'city':                 { 'default':  None,    'type': 'str' },
     'clearconfig':          { 'default':  None,    'type': 'str' },
-    'closeallsessions':     { 'default':  False,   'type': 'str' },
-    'compact':              { 'default':  False,   'type': 'str' },
+    'closeallsessions':     { 'default':  False,   'type': 'bool' },
+    'compact':              { 'default':  False,   'type': 'bool' },
     'company':              { 'default':  None,    'type': 'str' },
     'component':            { 'default':  None,    'type': 'str' },
-    'connect':              { 'default':  False,   'type': 'str' },
-    'connectimage':         { 'default':  False,   'type': 'str' },
+    'connect':              { 'default':  False,   'type': 'bool' },
+    'connectimage':         { 'default':  False,   'type': 'bool' },
     'converttononraid':     { 'default':  None,    'type': 'str' },
     'converttoraid':        { 'default':  None,    'type': 'str' },
     'count':                { 'default':  None,    'type': 'str' },
     'country':              { 'default':  None,    'type': 'str' },
     'createsecuritykey':    { 'default':  None,    'type': 'str' },
     'cryptographicerase':   { 'default':  None,    'type': 'str' },
-    'current':              { 'default':  False,   'type': 'str' },
-    'datetime':             { 'default':  False,   'type': 'str' },
-    'delete':               { 'default':  False,   'type': 'str' },
+    'current':              { 'default':  False,   'type': 'bool' },
+    'datetime':             { 'default':  False,   'type': 'bool' },
+    'delete':               { 'default':  False,   'type': 'bool' },
     'deletesecuritykey':    { 'default':  None,    'type': 'str' },
     'deletevd':             { 'default':  None,    'type': 'str' },
-    'dhcp':                 { 'default':  False,   'type': 'str' },
-    'dhcp6':                { 'default':  False,   'type': 'str' },
+    'dhcp':                 { 'default':  False,   'type': 'bool' },
+    'dhcp6':                { 'default':  False,   'type': 'bool' },
     'discardcache':         { 'default':  None,    'type': 'str' },
-    'disconnect':           { 'default':  False,   'type': 'str' },
-    'disconnectimage':      { 'default':  False,   'type': 'str' },
-    'displaycommon':        { 'default':  False,   'type': 'str' },
-    'displaybios':          { 'default':  False,   'type': 'str' },
-    'displaycpld':          { 'default':  False,   'type': 'str' },
-    'displayidsdm':         { 'default':  False,   'type': 'str' },
-    'displayidrac':         { 'default':  False,   'type': 'str' },
-    'displayipv4':          { 'default':  False,   'type': 'str' },
-    'displayipv6':          { 'default':  False,   'type': 'str' },
-    'displaynumber':        { 'default':  False,   'type': 'str' },
-    'displayonlyraw':       { 'default':  False,   'type': 'str' },
-    'displaytotal':         { 'default':  False,   'type': 'str' },
+    'disconnect':           { 'default':  False,   'type': 'bool' },
+    'disconnectimage':      { 'default':  False,   'type': 'bool' },
+    'displaycommon':        { 'default':  False,   'type': 'bool' },
+    'displaybios':          { 'default':  False,   'type': 'bool' },
+    'displaycpld':          { 'default':  False,   'type': 'bool' },
+    'displayidsdm':         { 'default':  False,   'type': 'bool' },
+    'displayidrac':         { 'default':  False,   'type': 'bool' },
+    'displayipv4':          { 'default':  False,   'type': 'bool' },
+    'displayipv6':          { 'default':  False,   'type': 'bool' },
+    'displaynumber':        { 'default':  False,   'type': 'bool' },
+    'displayonlyraw':       { 'default':  False,   'type': 'bool' },
+    'displaytotal':         { 'default':  False,   'type': 'bool' },
     'diskcachepolicy':      { 'default':  None,    'type': 'str' },
-    'displayraw':           { 'default':  False,   'type': 'str' },
+    'displayraw':           { 'default':  False,   'type': 'bool' },
     'dom':                  { 'default':  None,    'type': 'str' },
     'domainname':           { 'default':  None,    'type': 'str' },
     'dow':                  { 'default':  None,    'type': 'str' },
     'downloadlocation':     { 'default':  None,    'type': 'str' },
     'dstpd':                { 'default':  None,    'type': 'str' },
-    'enable6':              { 'default':  False,   'type': 'str' },
+    'enable6':              { 'default':  False,   'type': 'bool' },
     'encryptvd':            { 'default':  None,    'type': 'str' },
     'entitlementid':        { 'default':  None,    'type': 'str' },
-    'execute':              { 'default':  True,    'type': 'str' },
+    'execute':              { 'default':  True,    'type': 'bool' },
     'expirationtime':       { 'default':  None,    'type': 'str' },
     'filename':             { 'default':  None,    'type': 'str' },
     'filter':               { 'default':  None,    'type': 'str' },
-    'force':                { 'default':  False,   'type': 'str' },
+    'force':                { 'default':  False,   'type': 'bool' },
+    'certcheck':            { 'default':  False,   'type': 'bool' },
     'forceoffline':         { 'default':  None,    'type': 'str' },
     'forceonline':          { 'default':  None,    'type': 'str' },
-    'forcereset':           { 'default':  False,   'type': 'str' },
+    'forcereset':           { 'default':  False,   'type': 'bool' },
     'format':               { 'default':  None,    'type': 'str' },
     'fqdd':                 { 'default':  None,    'type': 'str' },
-    'fqdds':                { 'default':  False,   'type': 'str' },
+    'fqdds':                { 'default':  False,   'type': 'bool' },
     'frequency':            { 'default':  None,    'type': 'str' },
     'function':             { 'default':  None,    'type': 'str' },
-    'get':                  { 'default':  False,   'type': 'str' },
+    'get':                  { 'default':  False,   'type': 'bool' },
     'groupname':            { 'default':  None,    'type': 'str' },
     'hotspare':             { 'default':  None,    'type': 'str' },
     'keyindex':             { 'default':  None,    'type': 'str' },
-    'ignoreheaders':        { 'default':  False,   'type': 'str' },
+    'ignoreheaders':        { 'default':  False,   'type': 'bool' },
     'importconfig':         { 'default':  None,    'type': 'str' },
     'index':                { 'default':  None,    'type': 'str' },
     'init':                 { 'default':  None,    'type': 'str' },
@@ -574,6 +590,7 @@ def main():
     'name':                 { 'default':  None,    'type': 'str' },
     'newpasswd':            { 'default':  None,    'type': 'str' },
     'newraidlevel':         { 'default':  None,    'type': 'str' },
+    'nocertwarn':           { 'default':  True,    'type': 'bool' },
     'object':               { 'default':  None,    'type': 'str' },
     'objectgroup':          { 'default':  None,    'type': 'str' },
     'optimized':            { 'default':  False,   'type': 'str' },

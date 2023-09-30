@@ -38,3 +38,11 @@
 # Fixed pexpect import
 # 0.2.0: Sat 30 Sep 2023 19:41:55 AEST
 # Fixed racadm method
+# 0.2.1: Sat 30 Sep 2023 21:23:03 AEST
+# Fixed str/bool config in options
+# 0.2.2: Sat 30 Sep 2023 21:30:13 AEST
+# Added option to ignore/force cert check
+# 0.2.3: Sat 30 Sep 2023 21:32:48 AEST
+# Added option to ignore cert warning
+# 0.2.4: Sat 30 Sep 2023 22:14:51 AEST
+# Added code to clean up racadm output
