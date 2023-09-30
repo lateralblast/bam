@@ -181,7 +181,7 @@ You can verify this with a debug statement, e.g.:
 This would produce the following output:
 
 ```
-TASK [Output Gateway] ******************************************************************************************************************************
+TASK [Output Gateway] ***************************
 ok: [HOSTNAME] => {
     "msg": "192.168.11.254"
 }
@@ -268,11 +268,51 @@ Then do the following:
 Examples
 --------
 
+Get physical disks and output it:
+
+```
+- name: Get Physical Disks
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  get
+    object:       pdisks
+  register: pdisks
+
+- name: Output pdisks
+  debug:
+    msg: "{{ pdisks.stdout_lines }}"
+```
+
+Example output:
+
+```
+TASK [Ouput Physical Disks] *************************************
+ok: [192.168.11.238] => {
+    "msg": [
+        "Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1",
+        "Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+    ]
+}
+```
 
 Set the Lifecyle Controller to collect system inventory on reset using SSH
 
 ```
-- bam:
+- name: Set the Lifecyle Controller to collect system inventory on reset
+  bam:
     bmctype:      idrac
     method:       ssh
     bmchostname:  192.168.11.238
