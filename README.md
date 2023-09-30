@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.1.6
+Version: 0.2.0
 
 Introduction
 ------------
@@ -26,6 +26,18 @@ Other platforms can be relatively easily added if needed, for example ILOMs, ILO
 I'll added support for Intel IME/AMT via web calls like I've done here:
 
 https://github.com/lateralblast/goat
+
+To use the racadm method, racadm is required.
+
+For x86 based Linux, racadm can be installed from the packages provided by Dell:
+
+https://linux.dell.com/repo/community/openmanage/
+
+For non x86 based Linux and MacOS, you can run racadm via docker using the platform flag.
+
+I've written a script to do this:
+
+https://github.com/lateralblast/dracadm/
 
 Usage
 -----
@@ -107,7 +119,7 @@ Features
 Search
 ======
 
-To help with processing infomration, I've added a couple of search function tags.
+To help with processing information, I've added a couple of search function tags.
 
 The "search" tag with return any references to a term. 
 
@@ -127,7 +139,7 @@ For example to return any reference to Gateway from the getniccfg command:
     execute:      "{{ execute_get }}"
 ```
 
-This will return:
+This will return the line with Gateway in it, e.g.:
 
 ```
 Gateway              = 192.168.11.254
@@ -155,6 +167,24 @@ This will return:
 
 ```
 192.168.11.254
+```
+
+You can verify this with a debug statement, e.g.:
+
+```
+- name: Output Gateway
+  debug:
+    msg:  "{{ output.stdout }}"
+
+```
+
+This would produce the following output:
+
+```
+TASK [Output Gateway] ******************************************************************************************************************************
+ok: [HOSTNAME] => {
+    "msg": "192.168.11.254"
+}
 ```
 
 Debugging

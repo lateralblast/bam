@@ -30,3 +30,11 @@
 # Added set support for AMT
 # 0.1.6: Thu 16 Feb 2023 18:15:07 AEDT
 # Bug fixes and improvements
+# 0.1.7: Sat 30 Sep 2023 16:52:09 AEST
+# Fixed AMT set function call
+# 0.1.8: Sat 30 Sep 2023 18:22:28 AEST
+# Fixed iDRAC function call where method is racadm
+# 0.1.9: Sat 30 Sep 2023 19:04:59 AEST
+# Fixed pexpect import
+# 0.2.0: Sat 30 Sep 2023 19:41:55 AEST
+# Fixed racadm method

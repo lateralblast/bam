@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.1.6
+# Version:      0.2.0
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 import subprocess
+import pexpect
 import inspect
 import ssl
 import os
@@ -412,7 +413,8 @@ def get_set_idrac_value(module, switches):
     command = "%s %s" % (command, module.params['options'])
   if module.params['execute'] == True:
     if not module.params['function'] == "execute":
-      command = "racadm %s" % (command)
+      if not module.params['method'] == "racadm":
+        command = "racadm %s" % (command)
     if module.params['method'] == "ssh":
       (ssh_session, ssh_command) = start_ssh_session(module)
       ssh_session.expect("/admin1-> ")
@@ -445,7 +447,23 @@ def get_set_idrac_value(module, switches):
     else:
       command = "racadm -r %s -u %s -p %s %s" % (module.params['bmchostname'], module.params['bmcusername'], module.params['bmcpassword'], command)
       process = subprocess.run(command, shell = True, universal_newlines = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-      return(process.stdout, process.stderr, process.returncode, command, subroutine)
+      output  = process.stdout
+      if not module.params['search'] == None:
+        regex = r"\b(?=\w)" + re.escape(module.params['search']) + r"\b(?!\w)"
+        for line in output.split("\n"):
+          if re.search(regex, line, re.IGNORECASE):
+            return(line, "", 0, command, subroutine)
+      if not module.params['searchforvalue'] == None:
+        regex = r"\b(?=\w)" + re.escape(module.params['searchforvalue']) + r"\b(?!\w)"
+        for line in output.split("\n"):
+          if re.search(regex, line, re.IGNORECASE):
+            if re.search(r"=", line):
+              value = str(line)
+              value = line.split("=")[1]
+              value = re.sub(r"^\s+", "", value)
+              value = re.sub(r"\s+$", "", value)
+            return(value, "", 0, command, subroutine)
+      return(output, process.stderr, process.returncode, command, subroutine)
   else:
     return("", "", 0, command, subroutine)
   return
@@ -871,7 +889,7 @@ def main():
     else:
       module.params['bmcport'] = "16993"
     if module.params['function'] == "set":
-      (stdout, stderr, rc, command, subroutine) = get_set_value(module)
+      (stdout, stderr, rc, command, subroutine) = set_amt_value(module)
     else:
       (stdout, stderr, rc, command, subroutine) = get_amt_value(module)
 
@@ -884,9 +902,11 @@ def main():
         module.params['usesshkey'] = False
       else:
         module.params['usesshkey'] = True
-
     if module.params['method'] == "ssh" and module.params['bmctype'] == "idrac":
       (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
+
+  if module.params['method'] == "racadm" and module.params['bmctype'] == "idrac":
+    (stdout, stderr, rc, command, subroutine) = get_set_idrac_value(module, switches)
 
   if not stderr:
     stderr = ""
