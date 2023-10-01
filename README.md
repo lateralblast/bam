@@ -222,6 +222,35 @@ Otherwise, to get the value of a object:
     object:       iDRAC.OS-BMC.AdminState
 ```
 
+If you want to know what command was actually run to get the information you can use debug, e.g.:
+
+```
+- name: Get Virtual Disk Information
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  get
+    object:       vdisks
+    verbose:      true
+  register: pdisks
+
+- name: Output pdisks
+  debug:
+    msg: "{{ vdisks.command }}"
+```
+
+This will produce the following output:
+
+```
+TASK [Print Virtual Disk Information] *****************************************************************************************
+ok: [192.168.11.238] => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid get vdisks -o"
+}
+```
 
 The engine (virtualisation platform) can be automatically determined from the file name. 
 
