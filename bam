@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.2.4
+# Version:      0.2.7
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -480,6 +480,15 @@ def get_set_idrac_value(module, switches):
         output = "\n".join(output)
       return(output, process.stderr, process.returncode, command, subroutine)
   else:
+    if module.params['method'] == "racadm":
+      if module.params['nocertwarn'] == True:
+        rac_command = "racadm --nocertwarn"
+      else:
+        if module.params['certcheck'] == True:
+          rac_command = "racadm -S"
+        else:
+          rac_command = "racadm"
+      command = "%s %s" %(rac_command, command)
     return("", "", 0, command, subroutine)
   return
 
@@ -593,11 +602,11 @@ def main():
     'nocertwarn':           { 'default':  True,    'type': 'bool' },
     'object':               { 'default':  None,    'type': 'str' },
     'objectgroup':          { 'default':  None,    'type': 'str' },
-    'optimized':            { 'default':  False,   'type': 'str' },
+    'optimized':            { 'default':  False,   'type': 'bool' },
     'options':              { 'default':  None,    'type': 'str' },
     'outputfile':           { 'default':  None,    'type': 'str' },
     'outputtype':           { 'default':  None,    'type': 'str' },
-    'override':             { 'default':  False,   'type': 'str' },
+    'override':             { 'default':  False,   'type': 'bool' },
     'panumber':             { 'default':  None,    'type': 'str' },
     'passphrase':           { 'default':  None,    'type': 'str' },
     'passwd':               { 'default':  None,    'type': 'str' },
@@ -605,7 +614,7 @@ def main():
     'patrolread':           { 'default':  None,    'type': 'str' },
     'pcode':                { 'default':  None,    'type': 'str' },
     'pdkey':                { 'default':  None,    'type': 'str' },
-    'pending':              { 'default':  False,   'type': 'str' },
+    'pending':              { 'default':  False,   'type': 'bool' },
     'pfname':               { 'default':  None,    'type': 'str' },
     'plname':               { 'default':  None,    'type': 'str' },
     'pmailid':              { 'default':  None,    'type': 'str' },
@@ -620,13 +629,13 @@ def main():
     'proxyport':            { 'default':  None,    'type': 'str' },
     'proxytype':            { 'default':  None,    'type': 'str' },
     'proxyusername':        { 'default':  None,    'type': 'str' },
-    'put':                  { 'default':  False,   'type': 'str' },
-    'raidlevel':            { 'default':  False,   'type': 'str' },
-    'raidlevelmigration':   { 'default':  False,   'type': 'str' },
+    'put':                  { 'default':  False,   'type': 'bool' },
+    'raidlevel':            { 'default':  False,   'type': 'bool' },
+    'raidlevelmigration':   { 'default':  False,   'type': 'bool' },
     'readpolicy':           { 'default':  None,    'type': 'str' },
     'reboottype':           { 'default':  None,    'type': 'str' },
     'rebuild':              { 'default':  None,    'type': 'str' },
-    'recordperline':        { 'default':  False,   'type': 'str' },
+    'recordperline':        { 'default':  False,   'type': 'bool' },
     'records':              { 'default':  None,    'type': 'str' },
     'refkey':               { 'default':  None,    'type': 'str' },
     'rekey':                { 'default':  None,    'type': 'str' },
@@ -634,7 +643,7 @@ def main():
     'repeat':               { 'default':  None,    'type': 'str' },
     'replacephysicaldisk':  { 'default':  None,    'type': 'str' },
     'resetconfig':          { 'default':  None,    'type': 'str' },
-    'rollback':             { 'default':  False,   'type': 'str' },
+    'rollback':             { 'default':  False,   'type': 'bool' },
     'sanumber':             { 'default':  None,    'type': 'str' },
     'search':               { 'default':  None,    'type': 'str' },
     'searchforvalue':       { 'default':  None,    'type': 'str' },
@@ -664,27 +673,28 @@ def main():
     'start-time':           { 'default':  None,    'type': 'str' },
     'starttime':            { 'default':  None,    'type': 'str' },
     'state':                { 'default':  None,    'type': 'str' },
-    'static':               { 'default':  False,   'type': 'str' },
-    'static6':              { 'default':  False,   'type': 'str' },
-    'status':               { 'default':  False,   'type': 'str' },
+    'static':               { 'default':  False,   'type': 'bool' },
+    'static6':              { 'default':  False,   'type': 'bool' },
+    'status':               { 'default':  False,   'type': 'bool' },
     'street1':              { 'default':  None,    'type': 'str' },
     'street2':              { 'default':  None,    'type': 'str' },
     'stripesize':           { 'default':  None,    'type': 'str' },
     'subfunction':          { 'default':  None,    'type': 'str' },
-    't10pienable':          { 'default':  False,   'type': 'str' },
+    't10pienable':          { 'default':  False,   'type': 'bool' },
     'tftpserver':           { 'default':  None,    'type': 'str' },
     'transactionid':        { 'default':  None,    'type': 'str' },
     'time':                 { 'default':  None,    'type': 'str' },
     'uid':                  { 'default':  None,    'type': 'str' },
     'unblink':              { 'default':  None,    'type': 'str' },
     'unlock':               { 'default':  None,    'type': 'str' },
-    'update':               { 'default':  False,   'type': 'str' },
+    'update':               { 'default':  False,   'type': 'bool' },
     'userindex':            { 'default':  None,    'type': 'str' },
     'username':             { 'default':  None,    'type': 'str' },
-    'usesshkey':            { 'default':  True,    'type': 'str' },
+    'usesshkey':            { 'default':  True,    'type': 'bool' },
     'value':                { 'default':  None,    'type': 'str' },
     'vdkey':                { 'default':  None,    'type': 'str' },
-    'view':                 { 'default':  False,   'type': 'str' },
+    'verbose':              { 'default':  False,   'type': 'bool' },
+    'view':                 { 'default':  False,   'type': 'bool' },
     'waittime':             { 'default':  None,    'type': 'str' },
     'wom':                  { 'default':  None,    'type': 'str' },
     'writepolicy':          { 'default':  None,    'type': 'str' },
@@ -820,6 +830,7 @@ def main():
     ('raidlevel',            '-rl'),
     ('raidlevelmigration',   'raidlevelmigration:'),
     ('readpolicy',           '-rp '),
+    ('reboottype',           '-r '),
     ('rebuild',              'rebuild:'),
     ('recordperline',        '-o '),
     ('records',              '-c '),
@@ -848,6 +859,7 @@ def main():
     ('smnumber',             '-smnumber '),
     ('speed',                '-speed '),
     ('start',                '-s '),
+    ('starttime',            '-s '),
     ('start-date',           '-d '),
     ('start-time',           '-t '),
     ('starttime',            '-s '),
@@ -869,6 +881,7 @@ def main():
     ('username',             '-u '),
     ('userindex',            '-i '),
     ('vdkey',                '-vdkey:'),
+    ('verbose',              '-o'),
     ('view',                 '-v'),
     ('waittime',             '-w '),
     ('wom',                  '-wom '),

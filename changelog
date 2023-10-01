@@ -46,3 +46,9 @@
 # Added option to ignore cert warning
 # 0.2.4: Sat 30 Sep 2023 22:14:51 AEST
 # Added code to clean up racadm output
+# 0.2.5: Sun  1 Oct 2023 21:27:55 AEDT
+# Added starttime and reboottype flags for jobqueue
+# 0.2.6: Sun  1 Oct 2023 22:25:28 AEDT
+# Fixed racadm command output for non execute mode
+# 0.2.7: Mon  2 Oct 2023 09:45:30 AEDT
+# Added verbose tag

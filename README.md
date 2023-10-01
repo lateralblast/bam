@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.2.4
+Version: 0.2.7
 
 Introduction
 ------------
@@ -268,10 +268,10 @@ Then do the following:
 Examples
 --------
 
-Get physical disks and output it:
+Get physical disk infomation:
 
 ```
-- name: Get Physical Disks
+- name: Get Physical Disk Information
   bam:
     bmctype:      idrac
     method:       racadm
@@ -283,7 +283,7 @@ Get physical disks and output it:
     object:       pdisks
   register: pdisks
 
-- name: Output pdisks
+- name: Output Physical Disk Information
   debug:
     msg: "{{ pdisks.stdout_lines }}"
 ```
@@ -307,6 +307,137 @@ ok: [192.168.11.238] => {
     ]
 }
 ```
+
+Get virtual disk information:
+
+```
+- name: Get Virtual Disk Information
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  get
+    object:       vdisks
+  register: pdisks
+
+- name: Output pdisks
+  debug:
+    msg: "{{ vdisks.stdout_lines }}"
+```
+
+Example output:
+
+```
+TASK [Print Virtual Disk Information] ********
+ok: [192.168.11.238] => {
+    "msg": [
+        "Disk.Virtual.0:RAID.Integrated.1-1",
+        "Disk.Virtual.1:RAID.Integrated.1-1",
+        "Disk.Virtual.2:RAID.Integrated.1-1"
+    ]
+}
+```
+
+Get verbose virtual disk information:
+
+```
+- name: Get Virtual Disk Information
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  get
+    object:       vdisks
+    verbose:      true
+  register: pdisks
+
+- name: Output pdisks
+  debug:
+    msg: "{{ vdisks.stdout_lines }}"
+```
+
+Example verbose output:
+
+```
+TASK [Print Virtual Disk Information] ***********************************************************************************************
+ok: [r630p0] => {
+    "msg": [
+        "Disk.Virtual.0:RAID.Integrated.1-1",
+        "   Status                           = Unknown                                  ",
+        "   DeviceDescription                = Virtual Disk 0 on Integrated RAID Controller 1",
+        "   Name                             = boot                                     ",
+        "   RollupStatus                     = Unknown                                  ",
+        "   State                            = Online                                   ",
+        "   OperationalState                 = Not applicable                           ",
+        "   Layout                           = Raid-1                                   ",
+        "   Size                             = 893.75 GB                                ",
+        "   SpanDepth                        = 1                                        ",
+        "   AvailableProtocols               = SATA                                     ",
+        "   MediaType                        = SSD                                      ",
+        "   ReadPolicy                       = Read Ahead                               ",
+        "   WritePolicy                      = Write Back                               ",
+        "   StripeSize                       = 64K                                      ",
+        "   DiskCachePolicy                  = Default                                  ",
+        "   BadBlocksFound                   = NO                                       ",
+        "   Secured                          = NO                                       ",
+        "   RemainingRedundancy              = 1                                        ",
+        "   EnhancedCache                    = Not Applicable                           ",
+        "   T10PIStatus                      = Disabled                                 ",
+        "   BlockSizeInBytes                 = 512                                      ",
+        "Disk.Virtual.1:RAID.Integrated.1-1",
+        "   Status                           = Unknown                                  ",
+        "   DeviceDescription                = Virtual Disk 1 on Integrated RAID Controller 1",
+        "   Name                             = data                                     ",
+        "   RollupStatus                     = Unknown                                  ",
+        "   State                            = Online                                   ",
+        "   OperationalState                 = Not applicable                           ",
+        "   Layout                           = Raid-10                                  ",
+        "   Size                             = 2681.25 GB                               ",
+        "   SpanDepth                        = 1                                        ",
+        "   AvailableProtocols               = SATA                                     ",
+        "   MediaType                        = SSD                                      ",
+        "   ReadPolicy                       = Read Ahead                               ",
+        "   WritePolicy                      = Write Back                               ",
+        "   StripeSize                       = 64K                                      ",
+        "   DiskCachePolicy                  = Default                                  ",
+        "   BadBlocksFound                   = NO                                       ",
+        "   Secured                          = NO                                       ",
+        "   RemainingRedundancy              = 1                                        ",
+        "   EnhancedCache                    = Not Applicable                           ",
+        "   T10PIStatus                      = Disabled                                 ",
+        "   BlockSizeInBytes                 = 512                                      ",
+        "Disk.Virtual.2:RAID.Integrated.1-1",
+        "   Status                           = Unknown                                  ",
+        "   DeviceDescription                = Virtual Disk 2 on Integrated RAID Controller 1",
+        "   Name                             = backup                                   ",
+        "   RollupStatus                     = Unknown                                  ",
+        "   State                            = Online                                   ",
+        "   OperationalState                 = Not applicable                           ",
+        "   Layout                           = Raid-1                                   ",
+        "   Size                             = 3576.38 GB                               ",
+        "   SpanDepth                        = 1                                        ",
+        "   AvailableProtocols               = SATA                                     ",
+        "   MediaType                        = SSD                                      ",
+        "   ReadPolicy                       = Read Ahead                               ",
+        "   WritePolicy                      = Write Back                               ",
+        "   StripeSize                       = 64K                                      ",
+        "   DiskCachePolicy                  = Default                                  ",
+        "   BadBlocksFound                   = NO                                       ",
+        "   Secured                          = NO                                       ",
+        "   RemainingRedundancy              = 1                                        ",
+        "   EnhancedCache                    = Not Applicable                           ",
+        "   T10PIStatus                      = Disabled                                 ",
+        "   BlockSizeInBytes                 = 512                                      "
+    ]
+}
+```
+
 
 Set the Lifecyle Controller to collect system inventory on reset using SSH
 
