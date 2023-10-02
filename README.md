@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.2.8
+Version: 0.2.9
 
 Introduction
 ------------
@@ -489,7 +489,7 @@ Get verbose virtual disk information:
     function:     raid
     subfunction:  get
     object:       vdisks
-    verbose:      true
+    details:      true
   register: pdisks
 
 - name: Output pdisks
