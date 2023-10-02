@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.3.0
+# Version:      0.3.1
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -34,6 +34,33 @@ short_description: Automate BMC command line
 dewscription: 
   - Automate BMC configuration
 options:
+  action:
+    description:
+      - The action that must be invoked when the event occurs  
+  aftertime:
+    description:
+      - Displays events that have occurred after this time - The time format is yyyy-mm-dd HH:MM:SS
+  alertcategory:
+    description:
+      - Alert Category 
+  apply:
+    description:
+      - Apply action, e.g. reboot
+  assign:
+    description:
+      - Assign object, e.g. hotspare
+  auditcategory:
+    description:
+      - Audit Category 
+  beforetime:
+    description:
+      - Displays events that have occurred before this time - The time format is yyyy-mm-dd HH:MM:SS
+  binarymode:
+    description:
+      - Binary mode
+  blink:
+    description:
+      - Blink LED
   bmccommand;
     description:
       - Command to run on BMC
@@ -46,12 +73,213 @@ options:
   bmcusername:
     description:
       - Username for BMC
+  bmcport:
+    description:
+      - Port to connect to BMC on, e.g. 80,443,etc
   bmctype:
     description:
       - Set model of BMC, e.g. iDRAC
+  bmctype:
+    description:
+      - Set model of BMC, e.g. iDRAC
+  cancelbgi:
+    description:
+      - Cancel Background Initialisation
+  cancelcheck:
+    description:
+      - Cancel check
+  cancelrebuild:
+    description:
+      - Cancel rebuild
+  capacityexpansion:
+    description:
+      - Capacity expansion
+  category:
+    description:
+      - Category of alert or audit
+  ccheck:
+    description:
+      - Consistency check
+  certtype:
+    description:
+      - Certificate type
+  city:
+    description:
+      - City for configuring certs etc
+  clearconfig:
+    description:
+      - Clear config (e.g. RAID)
+  closeallsessions:
+    description:
+      - Close all connected session to a BMC
+  comment:
+    description:
+      - Add comment
+  compact:
+    description:
+      - Compact output format
+  company:
+    description:
+      - Company for configuring certs etc
+  complete:
+    description:
+      - Complete output
+  component:
+    description:
+      - Component or device to perform operation on
+  configurations:
+    description:
+      - Display configurations for device or object
+  connect:
+    description:
+      - Connect image or device
+  connectimage:
+    description:
+      - Connect image or device
+  converttononraid:
+    description:
+      - Connect disk to non RAID
+  converttoraid:
+    description:
+      - Connect disk to RAID
+  createsecuritykey:
+    description:
+      - Create security key for device or object
+  cryptographicerase:
+    description:
+      - Secure erase
+  count:
+    description:
+      - Number or numbers of events or items to return
+  country:
+    description:
+      - Country for configuring certs etc
+  current:
+    description:
+      - Get current value (not pending value)
+  datetime:
+    description:
+      - Get time in date time format
+  delete:
+    description:
+      - Delete item
+  deletesecuritykey:
+    description:
+      - Delete security key
+  deletevd:
+    description:
+      - Delete virtual disk
+  details:
+    description:
+      - Get details for device or object
+  dhcp:
+    description:
+      - Enable DHCP
+  dhcp6:
+    description:
+      - Enable DHCPv6
+  discardcache:
+    description:
+      - Discard cache
+  disconnect:
+    description:
+      - Disconnect image or device
+  disconnectimage:
+    description:
+      - Disconnect image or device
+  displaycommon:
+    description:
+      - Display common settings
+  displaybios:
+    description:
+      - Display BIOS version
+  displaycpld:
+    description:
+      - Display CPLD version
+  displayidsdm:
+    description:
+      - Display IDSDM version
+  displayidrac:
+    description:
+      - Display iDRAC version
+  displayipv4:
+    description:
+      - Display IPv4 details
+  displayipv6:
+    description:
+      - Display IPv4 details
+  displaynumber:
+    description:
+      - Display number or records or items
+  displaynumberofrecords:
+    description:
+      - Display number or records or items
+  displaytotal:
+    description:
+      - Display total number of items
+  diskcachepolicy:
+    description:
+      - Set disk cache policy
+  displayraw:
+    description:
+      - Display raw
+  dom:
+    description:
+      - Day of Month
+  domainname:
+    description:
+      - Domain Name
+  dayofmonth:
+    description:
+      - Day of Month
+  downloadlocation:
+    description:
+      - Download location
+  emms:
+    description:
+      - EMMs id to perform operation on
+  enabled:
+    description:
+      - Set object to enabled
+  enclosures:
+    description:
+      - Enclosures to perform operation on
+  encryptvd:
+    description:
+      - Encrypt virtual disk
+  entitlementid:
+    description:
+      - Entitlement ID
+  execute:
+    description:
+      - Execute operation
+  expirytime:
+    description:
+      - Expiry time for object or action
   execute:
     description:
       - Whether to execute ansible stanza (useful for debugging)
+  filename:
+    description:
+      - Filename to perform operation on
+  filter:
+    description:
+      - Filter to filter objects by
+  filters:
+    description:
+      - Filters
+  forceonline:
+    description:
+      - Force device or object online
+  forcereset:
+    description:
+      - Force reset device or object
+  format:
+    description:
+      - Specify format to use
+  fqdd:
+    description:
+      - Fully Qualified Descriptor to operate on
   function:
     description:
       - Action to perform (e.g. get/set)
@@ -100,15 +328,45 @@ options:
   sshkeytype:
     description:
       - SSH key type
+  uid:
+    description:
+      - User ID
+  update:
+    description:
+      - Update value/object
+  user:
+    description:
+      - User
+  userindex:
+    description:
+      - User index number
+  username:
+    description:
+      - User
   usesshkey:
     description:
       - Use SSH key 
   value:
     description:
       - Used with set object function, e.g. Enabled
+  vdkey:
+    description:
+      - Virtual Disk id
+  verbose:
+    description:
+      - Enable/disable verbose output
   waittime:
     description:
       - Wait time before executing command (used with some iDRAC commands)
+  writepolicy:
+    description:
+      - Write policy for RAID devices  
+  wom:
+    description:
+      - Week of month
+  weekofmonth:
+    description:
+      - Week of month
 '''
 
 EXAMPLES = r'''
@@ -499,10 +757,11 @@ def main():
     'action':                   { 'default':  None,    'type': 'str' },
     'aftertime':                { 'default':  None,    'type': 'str' },
     'alertcategory':            { 'default':  None,    'type': 'str' },
-    'auditcategory':            { 'default':  None,    'type': 'str' },
     'apply':                    { 'default':  None,    'type': 'str' },
     'applyreboot':              { 'default':  None,    'type': 'str' },
+    'auditcategory':            { 'default':  None,    'type': 'str' },
     'assign':                   { 'default':  None,    'type': 'str' },
+    'backuppassphrase':         { 'default':  None,    'type': 'str' },
     'beforetime':               { 'default':  None,    'type': 'str' },
     'binarymode':               { 'default':  False,   'type': 'bool' },
     'blink':                    { 'default':  None,    'type': 'str' },
@@ -528,6 +787,7 @@ def main():
     'complete':                 { 'default':  False,   'type': 'bool' },
     'component':                { 'default':  None,    'type': 'str' },
     'configurations':           { 'default':  None,    'type': 'str' },
+    'configpassphrase':         { 'default':  None,    'type': 'str' },
     'connect':                  { 'default':  False,   'type': 'bool' },
     'connectimage':             { 'default':  False,   'type': 'bool' },
     'converttononraid':         { 'default':  None,    'type': 'str' },
@@ -538,6 +798,8 @@ def main():
     'cryptographicerase':       { 'default':  None,    'type': 'str' },
     'current':                  { 'default':  False,   'type': 'bool' },
     'datetime':                 { 'default':  False,   'type': 'bool' },
+    'dayofmonth':               { 'default':  None,    'type': 'str' },
+    'dayofweek':                { 'default':  None,    'type': 'str' },
     'delete':                   { 'default':  False,   'type': 'bool' },
     'deletesecuritykey':        { 'default':  None,    'type': 'str' },
     'deletevd':                 { 'default':  None,    'type': 'str' },
@@ -586,6 +848,7 @@ def main():
     'frequency':                { 'default':  None,    'type': 'str' },
     'fromtime':                 { 'default':  None,    'type': 'str' },
     'function':                 { 'default':  None,    'type': 'str' },
+    'generate':                 { 'default':  False,   'type': 'bool' },
     'get':                      { 'default':  False,   'type': 'bool' },
     'groupname':                { 'default':  None,    'type': 'str' },
     'hotspare':                 { 'default':  None,    'type': 'str' },
@@ -616,6 +879,7 @@ def main():
     'newpasswd':                { 'default':  None,    'type': 'str' },
     'newraidlevel':             { 'default':  None,    'type': 'str' },
     'nocertwarn':               { 'default':  True,    'type': 'bool' },
+    'nopreserve':               { 'default':  False,   'type': 'bool' },
     'notifications':            { 'default':  None,    'type': 'str' },
     'object':                   { 'default':  None,    'type': 'str' },
     'objectgroup':              { 'default':  None,    'type': 'str' },
@@ -724,8 +988,10 @@ def main():
     'value':                    { 'default':  None,    'type': 'str' },
     'vdkey':                    { 'default':  None,    'type': 'str' },
     'verbose':                  { 'default':  False,   'type': 'bool' },
+    'vflash':                   { 'default':  False,   'type': 'bool' },
     'view':                     { 'default':  False,   'type': 'bool' },
     'waittime':                 { 'default':  None,    'type': 'str' },
+    'weekofmonth':              { 'default':  None,    'type': 'str' },
     'wom':                      { 'default':  None,    'type': 'str' },
     'writepolicy':              { 'default':  None,    'type': 'str' },
     'zip':                      { 'default':  None,    'type': 'str' }
@@ -747,6 +1013,7 @@ def main():
     ('apply',                   '-a '),
     ('applyreboot',             '-a '),
     ('assign',                  '-assign '),
+    ('backuppassphrase',        '-n '),
     ('beforetime',              '-e '),
     ('binarymode',              '-b '),
     ('blink',                   'blink:'),
@@ -766,6 +1033,7 @@ def main():
     ('company',                 '-company '),
     ('complete',                '--complete'),
     ('configurations',          '-c'),
+    ('configpassphrase',        '-n '),
     ('connect',                 '-c'),
     ('connectimage',            '-c'),
     ('converttononraid',        'converttononraid:'),
@@ -776,6 +1044,8 @@ def main():
     ('cryptographicerase',      'cryptographicerase:'),
     ('current',                 '-current'),
     ('datetime',                '-d'),
+    ('dayofmonth'               '-dom '),
+    ('datofweek',               '-dow '),
     ('delete',                  '-d'),
     ('deletesecuritykey',       'deletesecuritykey:'),
     ('deletevd',                'deletevd:'),
@@ -822,6 +1092,7 @@ def main():
     ('fromtime',                '-r '),
     ('ftpserver',               '-f '),
     ('get',                     '-g '),
+    ('generate',                '-g '),
     ('groupname',               '-g '),
     ('hotspare',                'hotspare:'),
     ('id',                      '-i '),
@@ -849,6 +1120,7 @@ def main():
     ('name',                    '-name '),
     ('newpasswd',               '-newpasswd '),
     ('newraidlevel',            '-new_rl '),
+    ('nopreserve',              '--nopreserve'),
     ('notifications',           '-n '),
     ('optimized',               '-o'),
     ('outputfile',              '-f '),
@@ -945,8 +1217,10 @@ def main():
     ('userindex',               '-i '),
     ('vdkey',                   '-vdkey:'),
     ('verbose',                 '-v'),
+    ('vflash',                  '--vFlash'),
     ('view',                    '-v'),
     ('waittime',                '-w '),
+    ('weekofmonth',             '-wom '),
     ('wom',                     '-wom '),
     ('writepolicy',             '-wp '),
     ('zip',                     '-zip')

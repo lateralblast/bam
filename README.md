@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.3.0
+Version: 0.3.1
 
 Introduction
 ------------
