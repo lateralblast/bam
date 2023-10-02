@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.3.1
+# Version:      0.3.2
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -103,6 +103,9 @@ options:
   certtype:
     description:
       - Certificate type
+  certcheck:
+    description:
+      - Certificate check 
   city:
     description:
       - City for configuring certs etc
@@ -268,6 +271,12 @@ options:
   filters:
     description:
       - Filters
+  fromtime:
+    description:
+      - From time
+  forceoffline:
+    description:
+      - Force device or object offline
   forceonline:
     description:
       - Force device or object online
@@ -283,18 +292,117 @@ options:
   function:
     description:
       - Action to perform (e.g. get/set)
+  generate:
+    description:
+      - Generate object
+  get:
+    description:
+      - Get object
+  groupname:
+    description:
+      - Group name
+  hotspare:
+    description:
+      - Hotspare device
+  id:
+    description:
+      - Item, object or device ID
+  ignoreheaders:
+    description:
+      - Ignore headers
+  importconfig:
+    description:
+      - Import device RAID config
+  index:
+    description:
+      - Index ID
+  init:
+    description:
+      - Init object or device
+  interval:
+    description:
+      - Time interval for operation
+  jobid:
+    description:
+      - Job ID
+  jobindex:
+    description:
+      - Job Index
+  key:
+    description:
+      - Key number or id for object
   keyindex:
     description:
       - Key number in iDRAC key index
+  keysubtype:
+    description:
+      - Key subtype
+  keytext:
+    description:
+      - Key text
+  keytype:
+    description:
+      - Key type
+  ledstate:
+    description:
+      - LED state
+  level:
+    description:
+      - Set level
+  location:
+    description:
+      - Location of device or object
+  logtype:
+    description:
+      - Log type e.g. xml
+  mdtype:
+    description:
+      - MD type 
+  messageid:
+    description:
+      - Message ID
+  method:
+    description:
+      - Method
   method:
     description:
       - Method to use to set value, e.g. SSH, or racadm
+  mode:
+    description:
+      - Mode
+  modifysecuritykey:
+    description:
+      - Modify security key for device or object
+  module:
+    description:
+      - Module
+  name:
+    description:
+      - Name of object 
+  newpasswd:
+    description:
+      - New password
+  newraidlevel:
+    description:
+      - New RAID level
+  nocertwarn:
+    description:
+      - Disable certificate warnings when performing operations
+  nopreserve:
+    description:
+      - Do not preserve configuration or/of object
+  notifications:
+    description:
+      - Notifications
   object:
     description:
       - Parameter/object to be set , e.g. cfgIpmiLanEnable
   objectgroup:
     description:
       - Component that is to have it's object set, e.g. cfgIpmi - Used with older versions of racadm
+  optimized:
+    description:
+      - Set to optimized
   options:
     description:
       - Additional options to add to command line
@@ -304,9 +412,114 @@ options:
   outputtype:
     description:
       - Output type (e.g. XML)
+  override:
+    description:
+      - Override existing object or value
+  passphrase:
+    description:
+      - Passphrase
+  passwd:
+    description:
+      - Password
+  password:
+    description:
+      - Password
+  path:
+    description:
+      - Path of object or device
+  patrolread:
+    description:
+      - Patrol read on object or device
+  pdisks:
+    description:
+      - Physical disks
+  pdkey:
+    description:
+      - Physical disk key or ID
+  pending:
+    description:
+      - Set to pending
+  power:
+    description:
+      - Power state (used with some iDRAC commands)
   powerstate:
     description:
       - Power state (used with some iDRAC commands)
+  preparetoremove:
+    description:
+      - Prepare device for removal
+  primarydns:
+    description:
+      - Primary DNS
+  propertyname:
+    description:
+      - Property name
+  proxy:
+    description:
+      - Proxy
+  proxyhost:
+    description:
+      - Proxy host
+  proxyhostname:
+    description:
+      - Proxy hostname
+  proxypassword:
+    description:
+      - Proxy password
+  proxyport:
+    description:
+      - Proxy port
+  proxytype:
+    description:
+      - Proxy type
+  proxyuser:
+    description:
+      - Proxy user
+  proxyusername:
+    description:
+      - Proxy user
+  raidlevel:
+    description:
+      - RAID level
+  raidlevelmigration:
+    description:
+      - RAID level migration
+  readpolicy:
+    description:
+      - Read policy on device
+  reboottype:
+    description:
+      - Reboot type
+  rebuild:
+    description:
+      - Rebuid device
+  recordperline:
+    description:
+      - Record per line
+  records:
+    description:
+      - Records
+  recurrence:
+    description:
+      - Recurrence time
+  refkey:
+    description:
+      - Specifies the controller or enclosure FQDDs
+  renamevd:
+    description:
+      - Rename virtual disk
+  repeats:
+    description:
+      - Repeat parameter
+  replacephysicaldisk:
+    description:
+      - Replace physical disk
+  resetconfig:
+    description:
+      - Reset config of device
+  rollback:
+    description:
+      - Rollback
   sharelocation:
     description:
       - Share location
@@ -777,6 +990,7 @@ def main():
     'capacityexpansion':        { 'default':  None,    'type': 'str' },
     'category':                 { 'default':  None,    'type': 'str' },
     'ccheck':                   { 'default':  None,    'type': 'str' },
+    'certcheck':                { 'default':  False,   'type': 'bool' },
     'certtype':                 { 'default':  None,    'type': 'str' },
     'city':                     { 'default':  None,    'type': 'str' },
     'clearconfig':              { 'default':  None,    'type': 'str' },
@@ -838,7 +1052,6 @@ def main():
     'filter':                   { 'default':  None,    'type': 'str' },
     'filters':                  { 'default':  None,    'type': 'str' },
     'force':                    { 'default':  False,   'type': 'bool' },
-    'certcheck':                { 'default':  False,   'type': 'bool' },
     'forceoffline':             { 'default':  None,    'type': 'str' },
     'forceonline':              { 'default':  None,    'type': 'str' },
     'forcereset':               { 'default':  False,   'type': 'bool' },
