@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.2.7
+Version: 0.2.8
 
 Introduction
 ------------
@@ -14,9 +14,16 @@ This is an Ansible module for automating BMCs, e.g. iDRACs.
 
 This was driven out of the need for a reliable and repeatable way to drive BMCs.
 As such it uses CLI tools like SSH/racadm rather than web based APIs such as redshift.
-I found redshift APIs to be totally unreliable and thus results were not repeatable.
+I found redshift APIs to be totally unreliable (for example different versions of iDRAC
+support different subsets of capability, whereas racadm supported the capability even if
+it wasn't exposed by redfish) and thus results were not repeatable.
 
-This module is based somewhat on my previous generic virtualisation ansible module:
+There are other modules built by others available with similar features e.g.:
+
+https://github.com/1NoOne1/ansible-racadm
+
+This module is based somewhat on the ideas of other modules, 
+and on my previous generic virtualisation ansible module:
 
 https://github.com/lateralblast/vamp
 
@@ -38,6 +45,31 @@ For non x86 based Linux and MacOS, you can run racadm via docker using the platf
 I've written a script to do this:
 
 https://github.com/lateralblast/dracadm/
+
+The goal of this module is to expose an Ansible based DSL that is more easily
+translated to and from the racadm command set allowing for more easy implementation
+and debugging.
+
+For example the command from the iDRAC manual to convert a disk reset a controller config is:
+
+```
+racadm --nocertwarn -r 192.168.11.238 -u root -p calvin storage resetconfig:RAID.Integrated.1-1
+```
+
+The Ansible stanza for this would be:
+
+```
+- name: Reset RAID Config
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    nocertwarn:   true
+    function:     storage
+    resetconfig:  RAID.Integrated.1-1
+```
 
 Usage
 -----
@@ -252,6 +284,80 @@ ok: [192.168.11.238] => {
 }
 ```
 
+An example of iterating through physical disks and convert them to raid capable disks
+and output the commands that would be run:
+
+```
+- name: Convert physical disks to RAID capable devices
+  bam:
+    bmctype:        idrac
+    method:         racadm
+    bmchostname:    192.168.11.238
+    bmcusername:    root
+    bmcpassword:    calvin
+    function:       raid
+    converttoraid:  "Disk.Bay.{{ item }}:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+    execute:        false
+  with_items:
+   - 0
+   - 1
+   - 2
+   - 3
+   - 4  
+   - 5 
+   - 6
+   - 7  
+   - 8
+   - 9
+  register:           output
+
+- name: Print job command
+  debug:
+    msg:      "{{ item.command }}"
+  with_items: "{{ output.results }}"
+  loop_control:
+    label: "{{ item.command }}"
+```
+
+The output from this example:
+
+```
+TASK [Print job command] *************************************************************
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+}
+```
+
+Module File Functionality
+-------------------------
+
 The engine (virtualisation platform) can be automatically determined from the file name. 
 
 To do this symlink the type to bam:
@@ -395,7 +501,7 @@ Example verbose output:
 
 ```
 TASK [Print Virtual Disk Information] ***********************************************************************************************
-ok: [r630p0] => {
+ok: [192.168.11.238] => {
     "msg": [
         "Disk.Virtual.0:RAID.Integrated.1-1",
         "   Status                           = Unknown                                  ",
@@ -466,7 +572,6 @@ ok: [r630p0] => {
     ]
 }
 ```
-
 
 Set the Lifecyle Controller to collect system inventory on reset using SSH
 

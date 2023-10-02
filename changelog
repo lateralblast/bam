@@ -52,3 +52,5 @@
 # Fixed racadm command output for non execute mode
 # 0.2.7: Mon  2 Oct 2023 09:45:30 AEDT
 # Added verbose tag
+# 0.2.8: Mon  2 Oct 2023 11:34:56 AEDT
+# Bug fixes and documentation updates
