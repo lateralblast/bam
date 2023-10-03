@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.3.2
+# Version:      0.3.3
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -541,6 +541,57 @@ options:
   sshkeytype:
     description:
       - SSH key type
+  start:
+    description:
+      - Start
+  start-date:
+    description:
+      - Start date
+  start-record:
+    description:
+      - Start record
+  start-time:
+    description:
+      - Start time for operations
+  starttime:
+    description:
+      - Start time for operations
+  static:
+    description:
+      - Static IPv4 address
+  static6:
+    description:
+      - Static IPv6 address
+  status:
+    description:
+      - Status
+  street1:
+    description:
+      - Street informations
+  street2:
+    description:
+      - Street informations
+  stripesize:
+    description:
+      - Stripe size
+  subcategory:
+    description:
+      - Subcategory
+  t10pienable:
+    description:
+      - Creates a virtual disk with protection information
+  tftpserver:
+    description:
+      - TFTP Server
+  time:
+    description:
+      - Time
+  transactionid:
+    description:
+      - Transaction ID
+  type:
+    description:
+      - Type
   uid:
     description:
       - User ID
@@ -1407,7 +1458,6 @@ def main():
     ('start-date',              '-d '),
     ('start-record',            '-s '),
     ('start-time',              '-t '),
-    ('starttime',               '-s '),
     ('state',                   '-state '),
     ('static',                  '-s'),
     ('static6',                 '-s6'),
