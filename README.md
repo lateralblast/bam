@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.3.3
+Version: 0.3.4
 
 Introduction
 ------------
@@ -608,4 +608,161 @@ Get the AMT system Model name from the System information
 Detailed iDRAC Examples
 -----------------------
 
-Insert example(s) here...
+This example steps through the set up of a RAID controller and virtual disks
+
+Reset RAID config:
+
+```
+- name: Reset RAID config
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    resetconfig:  resetconfig:RAID.Integrated.1-1
+  register: raidreset_status
+
+- name: Create variable for RAID reset status
+  debug: var=raidreset_status
+
+- name: Create a job for RAID reset
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  jobqueue
+    create:       RAID.Integrated.1-1
+  register: raidreset_job
+
+- name: Create variable for RAID reset job
+  debug: var=raidreset_job
+
+- name: Powercycle server to execute RAID controller reset job
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     serveraction
+    subfunction:  powercycle
+  register: raidreset_reboot
+  when: raidreset_job != ''
+
+- name: Create a variable for RAID reset reboot
+  debug: var=raidreset_reboot
+
+- name: Wait for RAID Reset job to be completed
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     jobqueue
+    subfunction:  view
+  register: raidreset_jobstatus
+  until: raidreset_jobstatus.stdout.find("Running") <= 0 and raidreset_jobstatus.stdout.find("Scheduled") <= 0 and raidreset_jobstatus.stdout.find("New") <= 0
+  retries: 20
+  delay: 30
+  when: '"Server power operation successful" in raidreset_reboot.stdout_lines'
+
+- name: Create a variable for RAID reset job status
+  debug: var=raidreset_jobstatus
+ 
+- name: Check whether RAID reset deleted all the Virtual Disks
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  get
+    object:       vdisks
+  register: vdisk_status
+
+- name: Create a variable for vdisk status
+  debug: vdisks_status
+
+- name: Setup Hardware RAID-1 across first two disks
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      192.168.11.238
+    bmcusername:      root
+    bmcpassword:      calvin
+    function:         raid
+    createvd:         RAID.Integrated.1-1
+    name:             boot
+    raidlevel:        r1
+    writepolicy:      wt
+    readpolicy:       ra
+    diskcachepolicy:  default
+    stripesize:       64
+    pdkey:            Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1
+  register: vdisk1_raid_status
+
+- name: Setup Hardware RAID-10 across next six disks
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      192.168.11.238
+    bmcusername:      root
+    bmcpassword:      calvin
+    function:         raid
+    createvd:         RAID.Integrated.1-1
+    name:             data 
+    raidlevel:        r1
+    writepolicy:      wt
+    readpolicy:       ra
+    diskcachepolicy:  default
+    stripesize:       64
+    pdkey:            Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1
+  register: vdisk1_raid_status
+
+- name: Setup Hardware RAID-1 across last two disks
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      192.168.11.238
+    bmcusername:      root
+    bmcpassword:      calvin
+    function:         raid
+    createvd:         RAID.Integrated.1-1
+    name:             boot
+    raidlevel:        r1
+    writepolicy:      wt
+    readpolicy:       ra
+    diskcachepolicy:  backup
+    stripesize:       64
+    pdkey:            Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1
+  register: vdisk1_raid_status
+
+- name: Create a variable for RAID status
+  debug: var=vdisk1_raid1_status
+
+- name: Create a job for RAID-1 configuration
+  bam:
+    bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     raid
+    subfunction:  jobqueue
+    create:       RAID.Integrated.1-1
+  register:     register: vdisk1_raid1_job
+  failed_when:  '"ERROR" in vdisk1_raid1_job.stdout
+
+- name: Create a variable for RAID configuration job
+  debug: var=vdisk1_raid1_job
+
+```
+

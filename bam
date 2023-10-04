@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.3.3
+# Version:      0.3.4
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -145,6 +145,12 @@ options:
   converttoraid:
     description:
       - Connect disk to RAID
+  create:
+    description:
+      - Create job, object or device
+  createsecuritykey:
+    description:
+      - Create security key for device or object
   createsecuritykey:
     description:
       - Create security key for device or object
@@ -1045,6 +1051,7 @@ def main():
     'certtype':                 { 'default':  None,    'type': 'str' },
     'city':                     { 'default':  None,    'type': 'str' },
     'clearconfig':              { 'default':  None,    'type': 'str' },
+    'clone':                    { 'default':  False,   'type': 'bool' },
     'closeallsessions':         { 'default':  False,   'type': 'bool' },
     'comment':                  { 'default':  None,    'type': 'str' },
     'compact':                  { 'default':  False,   'type': 'bool' },
@@ -1059,6 +1066,7 @@ def main():
     'converttoraid':            { 'default':  None,    'type': 'str' },
     'count':                    { 'default':  None,    'type': 'str' },
     'country':                  { 'default':  None,    'type': 'str' },
+    'create':                   { 'default':  None,    'type': 'str' },
     'createsecuritykey':        { 'default':  None,    'type': 'str' },
     'cryptographicerase':       { 'default':  None,    'type': 'str' },
     'current':                  { 'default':  False,   'type': 'bool' },
@@ -1111,6 +1119,7 @@ def main():
     'fqdds':                    { 'default':  False,   'type': 'bool' },
     'frequency':                { 'default':  None,    'type': 'str' },
     'fromtime':                 { 'default':  None,    'type': 'str' },
+    'ftpserver':                { 'default':  None,    'type': 'str' },
     'function':                 { 'default':  None,    'type': 'str' },
     'generate':                 { 'default':  False,   'type': 'bool' },
     'get':                      { 'default':  False,   'type': 'bool' },
@@ -1308,8 +1317,8 @@ def main():
     ('cryptographicerase',      'cryptographicerase:'),
     ('current',                 '-current'),
     ('datetime',                '-d'),
-    ('dayofmonth'               '-dom '),
-    ('datofweek',               '-dow '),
+    ('dayofmonth',              '-dom '),
+    ('dayofweek',               '-dow '),
     ('delete',                  '-d'),
     ('deletesecuritykey',       'deletesecuritykey:'),
     ('deletevd',                'deletevd:'),
