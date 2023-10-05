@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.3.5
+Version: 0.3.6
 
 Introduction
 ------------
@@ -621,11 +621,12 @@ Reset RAID config:
     bmcusername:  root
     bmcpassword:  calvin
     function:     raid
-    resetconfig:  resetconfig:RAID.Integrated.1-1
+    resetconfig:  RAID.Integrated.1-1
   register: raidreset_status
 
 - name: Create variable for RAID reset status
-  debug: var=raidreset_status
+  debug:
+    var: raidreset_status
 
 - name: Create a job for RAID reset
   bam:
@@ -640,7 +641,8 @@ Reset RAID config:
   register: raidreset_job
 
 - name: Create variable for RAID reset job
-  debug: var=raidreset_job
+  debug:
+    var: raidreset_job
 
 - name: Powercycle server to execute RAID controller reset job
   bam:
@@ -655,7 +657,8 @@ Reset RAID config:
   when: raidreset_job != ''
 
 - name: Create a variable for RAID reset reboot
-  debug: var=raidreset_reboot
+  debug:
+    var: raidreset_reboot
 
 - name: Wait for RAID Reset job to be completed
   bam:
@@ -688,7 +691,8 @@ Reset RAID config:
   register: vdisk_status
 
 - name: Create a variable for vdisk status
-  debug: vdisks_status
+  debug:
+    var: vdisks_status
 
 - name: Setup Hardware RAID-1 across first two disks
   bam:
@@ -707,6 +711,11 @@ Reset RAID config:
     stripesize:       64
     pdkey:            Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1
   register: vdisk1_raid_status
+  when:     vdisks_status is search("No virtual disks")
+
+- name: Create a variable for RAID status
+  debug:
+    var: vdisk1_raid_status
 
 - name: Setup Hardware RAID-10 across next six disks
   bam:
@@ -718,13 +727,18 @@ Reset RAID config:
     function:         raid
     createvd:         RAID.Integrated.1-1
     name:             data 
-    raidlevel:        r1
+    raidlevel:        r10
     writepolicy:      wt
     readpolicy:       ra
     diskcachepolicy:  default
     stripesize:       64
     pdkey:            Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1
-  register: vdisk1_raid_status
+  register: vdisk2_raid_status
+  when:     vdisks_status is search("No virtual disks")
+
+- name: Create a variable for RAID status
+  debug:
+    var: vdisk2_raid_status
 
 - name: Setup Hardware RAID-1 across last two disks
   bam:
@@ -742,10 +756,12 @@ Reset RAID config:
     diskcachepolicy:  backup
     stripesize:       64
     pdkey:            Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1,Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1
-  register: vdisk1_raid_status
+  register: vdisk3_raid_status
+  when:     vdisks_status is search("No virtual disks")
 
 - name: Create a variable for RAID status
-  debug: var=vdisk1_raid1_status
+  debug:
+    var: vdisk3_raid1_status
 
 - name: Create a job for RAID-1 configuration
   bam:
@@ -757,12 +773,13 @@ Reset RAID config:
     bmcpassword:  calvin
     function:     raid
     subfunction:  jobqueue
-    create:       RAID.Integrated.1-1
-  register:     register: vdisk1_raid1_job
-  failed_when:  '"ERROR" in vdisk1_raid1_job.stdout
+    queue:        RAID.Integrated.1-1
+  register:     register: vdisks_raid_job
+  failed_when:  disks_raid_job.stdout is seach("ERROR")
+  when:         vdisks_status is search("No virtual disks")
 
 - name: Create a variable for RAID configuration job
-  debug: var=vdisk1_raid1_job
-
+  debug:
+    var: vdisks_raid_job
 ```
 
