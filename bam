@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.3.4
+# Version:      0.3.5
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -145,9 +145,6 @@ options:
   converttoraid:
     description:
       - Connect disk to RAID
-  create:
-    description:
-      - Create job, object or device
   createsecuritykey:
     description:
       - Create security key for device or object
@@ -484,6 +481,9 @@ options:
   proxyusername:
     description:
       - Proxy user
+  queuename:
+    description:
+      - Queue name
   raidlevel:
     description:
       - RAID level
@@ -922,6 +922,8 @@ def get_set_idrac_value(module, switches):
         command = "%s %s" % (command, module.params['action'])
       if not module.params['object'] == None:
         command = "%s %s" % (command, module.params['object'])
+      if not module.params['queuename'] == None:
+        command = "%s %s" % (command, module.params['queuename'])
       for key, value in switches.items():
         if not module.params[key] == None:
           if re.search(r"^true$|^yes$", str(module.params[key]).lower()) or module.params[key] == True:
@@ -1066,8 +1068,8 @@ def main():
     'converttoraid':            { 'default':  None,    'type': 'str' },
     'count':                    { 'default':  None,    'type': 'str' },
     'country':                  { 'default':  None,    'type': 'str' },
-    'create':                   { 'default':  None,    'type': 'str' },
     'createsecuritykey':        { 'default':  None,    'type': 'str' },
+    'createvd':                 { 'default':  None,    'type': 'str' },
     'cryptographicerase':       { 'default':  None,    'type': 'str' },
     'current':                  { 'default':  False,   'type': 'bool' },
     'datetime':                 { 'default':  False,   'type': 'bool' },
@@ -1189,7 +1191,8 @@ def main():
     'proxyuser':                { 'default':  None,    'type': 'str' },
     'proxyusername':            { 'default':  None,    'type': 'str' },
     'put':                      { 'default':  False,   'type': 'bool' },
-    'raidlevel':                { 'default':  False,   'type': 'bool' },
+    'queuename':                { 'default':  None,    'type': 'str' },
+    'raidlevel':                { 'default':  None,    'type': 'str' },
     'raidlevelmigration':       { 'default':  False,   'type': 'bool' },
     'readpolicy':               { 'default':  None,    'type': 'str' },
     'reboottype':               { 'default':  None,    'type': 'str' },
@@ -1314,6 +1317,7 @@ def main():
     ('count',                   '-c '),
     ('country',                 '-country '),
     ('createsecuritykey',       'createsecuritykey:'),
+    ('createvd',                'createvd:'),
     ('cryptographicerase',      'cryptographicerase:'),
     ('current',                 '-current'),
     ('datetime',                '-d'),
