@@ -674,7 +674,11 @@ Reset RAID config:
   retries: 20
   delay: 30
   when: '"Server power operation successful" in raidreset_reboot.stdout_lines'
+```
 
+Create virtual disks
+
+```
 - name: Create a variable for RAID reset job status
   debug: var=raidreset_jobstatus
  
