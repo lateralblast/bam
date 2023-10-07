@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.3.6
+Version: 0.3.7
 
 Introduction
 ------------
@@ -144,9 +144,6 @@ An example Ansible stanza that would force/use the newer method:
 
 Support for SSH also exists allowing the use of keys. 
 When using SSH as the method, if no password is given, it will be assumed SSH keys are being used.
-
-Features
---------
 
 Search
 ------
@@ -400,6 +397,55 @@ Then do the following:
     object:       iDRAC.OS-BMC.AdminState
 ```
 
+Legacy racadm support
+---------------------
+
+There is support for legacy racadm commands.
+The legacy mode can be enabled by setting the function to config or getconfig.
+
+For example, the legacy racadm command to set the boot once device to VCD-DVD:
+
+```
+racadm config -g cfgServerInfo -o cfgServerFirstBootDevice VCD-DVD
+```
+
+Has the following ansible stanza:
+
+```
+- name: Set the first once device to VCD-DVD using legacy racadm format
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     config
+    group:        cfgServerInfo
+    object:       cfgServerFirstBootDevice
+    value:        VCD-DVD
+```
+
+The newer command for this is:
+
+```
+racadm set iDRAC.serverboot.FirstBootDevice VCD-DV
+```
+
+The ansible stanze for using he newer method is:
+
+```
+- name: Set the first once device to VCD-DVD using newer racadm format
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     set
+    object:       cfgServerFirstBootDevice
+    value:        VCD-DVD
+```
+
 Examples
 --------
 
@@ -573,7 +619,7 @@ ok: [192.168.11.238] => {
 }
 ```
 
-Set the Lifecyle Controller to collect system inventory on reset using SSH
+Set the Lifecyle Controller to collect system inventory on reset using SSH:
 
 ```
 - name: Set the Lifecyle Controller to collect system inventory on reset
@@ -589,7 +635,7 @@ Set the Lifecyle Controller to collect system inventory on reset using SSH
     value:        Enabled
 ```
 
-Get the AMT system Model name from the System information
+Get the AMT system Model name from the System information:
 
 ```
 - name: Get AMT object value via http(s)
@@ -603,6 +649,35 @@ Get the AMT system Model name from the System information
     object:       "model"
     function:     get
     execute:      "{{ execute_get }}"
+```
+
+Execute a command directly:
+
+```
+- name: Set one time boot device to BIOS
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     execute
+    bmccommand:   racadm set iDRAC.serverboot.FirstBootDevice BIOS
+```
+
+Module version of previous command:
+
+```
+- name: Set one time boot device to BIOS
+  bam:
+    bmctype:      idrac
+    method:       ssh
+    bmchostname:  192.168.11.238
+    bmcusername:  root
+    bmcpassword:  calvin
+    function:     set
+    object:       iDRAC.serverboot.FirstBootDevice
+    value:        BIOS
 ```
 
 Detailed iDRAC Examples
