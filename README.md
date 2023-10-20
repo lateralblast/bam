@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.3.7
+Version: 0.3.9
 
 Introduction
 ------------
@@ -145,6 +145,21 @@ An example Ansible stanza that would force/use the newer method:
 Support for SSH also exists allowing the use of keys. 
 When using SSH as the method, if no password is given, it will be assumed SSH keys are being used.
 
+Features
+--------
+
+In addition to the usual Ansible module features, this module has the following features:
+
+- Where a commnd is run it can return the command run making it useful for debugging
+  - This can be discovered via the register function and calling the command property
+- Can search output for a value which is useful for debugging and doing conditional actions
+  - This can be called for in two ways
+    - A search function which will return the line the string is found in
+    - A searchforvalue function which will try to return just the value in search result rather than the entire line
+- Return the value of a get function which is also useful for debugging and doing conditional actions
+  - This can be discovered via the register function and calling the value property
+- Sylinking to the BMC type to the module file can be used to call the BMC type directly in a stanza
+
 Search
 ------
 
@@ -214,6 +229,54 @@ TASK [Output Gateway] ***************************
 ok: [HOSTNAME] => {
     "msg": "192.168.11.254"
 }
+```
+
+You can also use the value property which will try to extract the value from the output, for example:
+
+```
+- name: Get Gateway references from iDRAC Network config via ssh using newer method
+  bam:
+    bmctype:          idrac
+    method:           ssh
+    bmchostname:      "{{ ansible_host }}"
+    bmcusername:      "{{ idrac_username }}"
+    usesshkey:        true
+    sshkeyfile:       "{{idrac_sshkey_file}}"
+    function:         getniccfg
+    search:           "Gateway"
+    execute:          "{{ execute_get }}"
+```
+
+```
+- name: Output Gateway
+  debug:
+    msg:  "{{ output.value }}"
+
+```
+
+This would produce the following output:
+
+```
+TASK [Output Gateway] ***************************
+ok: [HOSTNAME] => {
+    "msg": "192.168.11.254"
+}
+```
+
+This is more useful with the newer racadm command/object structure, where you would follow the following method:
+
+```
+- name: Get Gateway references from iDRAC Network config via ssh using newer method
+  bam:
+    bmctype:          idrac
+    method:           ssh
+    bmchostname:      "{{ ansible_host }}"
+    bmcusername:      "{{ idrac_username }}"
+    usesshkey:        true
+    sshkeyfile:       "{{idrac_sshkey_file}}"
+    function:         get
+    object:           "iDRAC.IPv4.Gateway"
+    execute:          "{{ execute_get }}"
 ```
 
 Debugging
