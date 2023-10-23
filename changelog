@@ -80,3 +80,5 @@
 # Bug fixes
 # 0.4.1: Mon 23 Oct 2023 20:35:42 AEDT
 # Improved routine to get value
+# 0.4.2: Tue 24 Oct 2023 07:08:07 AEDT
+# Added better handling handling for iDRAC sshpkauth

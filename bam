@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.4.1
+# Version:      0.4.2
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -1272,6 +1272,7 @@ def main():
     'subcategory':              { 'default':  None,    'type': 'str' },
     'subfunction':              { 'default':  None,    'type': 'str' },
     't10pienable':              { 'default':  False,   'type': 'bool' },
+    'text':                     { 'default':  None,    'type': 'str' },
     'tftpserver':               { 'default':  None,    'type': 'str' },
     'transactionid':            { 'default':  None,    'type': 'str' },
     'time':                     { 'default':  None,    'type': 'str' },
@@ -1509,6 +1510,7 @@ def main():
     ('stripesize',              '-ss '),
     ('subcategory',             '-b '),
     ('t10pienable',             '-T10PIEnable'),
+    ('text',                    '-t '),
     ('tftpserver',              '-a '),
     ('time',                    '-time '),
     ('transactionid',           '-t '),
@@ -1532,6 +1534,12 @@ def main():
   ]) 
 
   value = ""
+
+  if module.params['function'] == "sshpkauth":
+    if module.params['subfunction'] == "view":
+      module.params['subfunction'] = "-v"
+    if module.params['subfunction'] == "delete":
+      module.params['subfunction'] = "-d"
 
   if module.params['bmctype'] == None:
     if re.search("_", module._name):
