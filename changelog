@@ -78,3 +78,5 @@
 # Added code to retun value and updated documentation
 # 0.4.0: Fri 20 Oct 2023 22:32:08 AEDT
 # Bug fixes
+# 0.4.1: Mon 23 Oct 2023 20:35:42 AEDT
+# Improved routine to get value
