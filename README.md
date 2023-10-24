@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.4.1
+Version: 0.4.3
 
 Introduction
 ------------
@@ -53,7 +53,7 @@ and debugging.
 For example the command from the iDRAC manual to convert a disk reset a controller config is:
 
 ```
-racadm --nocertwarn -r 192.168.11.238 -u root -p calvin storage resetconfig:RAID.Integrated.1-1
+racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD storage resetconfig:RAID.Integrated.1-1
 ```
 
 The Ansible stanza for this would be:
@@ -63,9 +63,9 @@ The Ansible stanza for this would be:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     nocertwarn:   true
     function:     storage
     resetconfig:  RAID.Integrated.1-1
@@ -118,9 +118,9 @@ For example an Ansible stanza that would force/use the first method:
   bam:
     bmctype:      idrac
     method:       ssh
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     set
     objectgroup:  cfgIpmiLan
     object:       cfgIpmiLanEnable
@@ -134,9 +134,9 @@ An example Ansible stanza that would force/use the newer method:
   bam:
     bmctype:      idrac
     method:       ssh 
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     set
     objectgroup:  iDRAC.IPMILan.Enable
     value:        Enabled
@@ -291,9 +291,9 @@ For example, if you want to run in debug mode without running the actual command
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     get
     object:       iDRAC.OS-BMC.AdminState
     execute:      no
@@ -307,9 +307,9 @@ Otherwise, to get the value of a object:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     get
     object:       iDRAC.OS-BMC.AdminState
 ```
@@ -321,9 +321,9 @@ If you want to know what command was actually run to get the information you can
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  get
     object:       vdisks
@@ -339,8 +339,8 @@ This will produce the following output:
 
 ```
 TASK [Print Virtual Disk Information] *****************************************************************************************
-ok: [192.168.11.238] => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid get vdisks -o"
+ok: ["{{ bmc_admin_hostname }}"] => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid get vdisks -o"
 }
 ```
 
@@ -352,9 +352,9 @@ and output the commands that would be run:
   bam:
     bmctype:        idrac
     method:         racadm
-    bmchostname:    192.168.11.238
-    bmcusername:    root
-    bmcpassword:    calvin
+    bmchostname:    "{{ bmc_admin_hostname }}"
+    bmcusername:    "{{ bmc_admin_username }}"
+    bmcpassword:    "{{ bmc_admin_password }}"
     function:       raid
     converttoraid:  "Disk.Bay.{{ item }}:Enclosure.Internal.0-1:RAID.Integrated.1-1"
     execute:        false
@@ -383,35 +383,35 @@ The output from this example:
 
 ```
 TASK [Print job command] *************************************************************
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: [192.168.11.238] => (item=racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
-    "msg": "racadm --nocertwarn -r 192.168.11.238 -u root -p calvin raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1"
+ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+    "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
 ```
 
@@ -432,9 +432,9 @@ Then do the following:
 - name: Example with symlinked file to set engine
   idrac:
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     get
     object:       iDRAC.OS-BMC.AdminState
 ```
@@ -454,9 +454,9 @@ Then do the following:
   bam_get:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     object:       iDRAC.OS-BMC.AdminState
 ```
 
@@ -479,9 +479,9 @@ Has the following ansible stanza:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     config
     group:        cfgServerInfo
     object:       cfgServerFirstBootDevice
@@ -501,9 +501,9 @@ The ansible stanze for using he newer method is:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     set
     object:       cfgServerFirstBootDevice
     value:        VCD-DVD
@@ -519,9 +519,9 @@ Get physical disk infomation:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  get
     object:       pdisks
@@ -536,7 +536,7 @@ Example output:
 
 ```
 TASK [Ouput Physical Disks] *************************************
-ok: [192.168.11.238] => {
+ok: ["{{ bmc_admin_hostname }}"] => {
     "msg": [
         "Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1",
         "Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1",
@@ -559,9 +559,9 @@ Get virtual disk information:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  get
     object:       vdisks
@@ -576,7 +576,7 @@ Example output:
 
 ```
 TASK [Print Virtual Disk Information] ********
-ok: [192.168.11.238] => {
+ok: ["{{ bmc_admin_hostname }}"] => {
     "msg": [
         "Disk.Virtual.0:RAID.Integrated.1-1",
         "Disk.Virtual.1:RAID.Integrated.1-1",
@@ -592,9 +592,9 @@ Get verbose virtual disk information:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  get
     object:       vdisks
@@ -610,7 +610,7 @@ Example verbose output:
 
 ```
 TASK [Print Virtual Disk Information] ***********************************************************************************************
-ok: [192.168.11.238] => {
+ok: ["{{ bmc_admin_hostname }}"] => {
     "msg": [
         "Disk.Virtual.0:RAID.Integrated.1-1",
         "   Status                           = Unknown                                  ",
@@ -689,9 +689,9 @@ Set the Lifecyle Controller to collect system inventory on reset using SSH:
   bam:
     bmctype:      idrac
     method:       ssh
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     get
     objectgroup:  LifecycleController.Embedded.1
     object:       LCAttributes.1#CollectSystemInventoryOnRestart
@@ -721,9 +721,9 @@ Execute a command directly:
   bam:
     bmctype:      idrac
     method:       ssh
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     execute
     bmccommand:   racadm set iDRAC.serverboot.FirstBootDevice BIOS
 ```
@@ -735,9 +735,9 @@ Module version of previous command:
   bam:
     bmctype:      idrac
     method:       ssh
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     set
     object:       iDRAC.serverboot.FirstBootDevice
     value:        BIOS
@@ -755,9 +755,9 @@ Reset RAID config:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     resetconfig:  RAID.Integrated.1-1
   register: raidreset_status
@@ -770,9 +770,9 @@ Reset RAID config:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  jobqueue
     create:       RAID.Integrated.1-1
@@ -786,9 +786,9 @@ Reset RAID config:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     serveraction
     subfunction:  powercycle
   register: raidreset_reboot
@@ -802,9 +802,9 @@ Reset RAID config:
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     jobqueue
     subfunction:  view
   register: raidreset_jobstatus
@@ -814,7 +814,7 @@ Reset RAID config:
   when: '"Server power operation successful" in raidreset_reboot.stdout_lines'
 ```
 
-Create virtual disks
+Create virtual disks:
 
 ```
 - name: Create a variable for RAID reset job status
@@ -824,9 +824,9 @@ Create virtual disks
   bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  get
     object:       vdisks
@@ -840,9 +840,9 @@ Create virtual disks
   bam:
     bmctype:          idrac
     method:           racadm
-    bmchostname:      192.168.11.238
-    bmcusername:      root
-    bmcpassword:      calvin
+    bmchostname:      "{{ bmc_admin_hostname }}"
+    bmcusername:      "{{ bmc_admin_username }}"
+    bmcpassword:      "{{ bmc_admin_password }}"
     function:         raid
     createvd:         RAID.Integrated.1-1
     name:             boot
@@ -863,9 +863,9 @@ Create virtual disks
   bam:
     bmctype:          idrac
     method:           racadm
-    bmchostname:      192.168.11.238
-    bmcusername:      root
-    bmcpassword:      calvin
+    bmchostname:      "{{ bmc_admin_hostname }}"
+    bmcusername:      "{{ bmc_admin_username }}"
+    bmcpassword:      "{{ bmc_admin_password }}"
     function:         raid
     createvd:         RAID.Integrated.1-1
     name:             data 
@@ -886,9 +886,9 @@ Create virtual disks
   bam:
     bmctype:          idrac
     method:           racadm
-    bmchostname:      192.168.11.238
-    bmcusername:      root
-    bmcpassword:      calvin
+    bmchostname:      "{{ bmc_admin_hostname }}"
+    bmcusername:      "{{ bmc_admin_username }}"
+    bmcpassword:      "{{ bmc_admin_password }}"
     function:         raid
     createvd:         RAID.Integrated.1-1
     name:             boot
@@ -910,9 +910,9 @@ Create virtual disks
     bam:
     bmctype:      idrac
     method:       racadm
-    bmchostname:  192.168.11.238
-    bmcusername:  root
-    bmcpassword:  calvin
+    bmchostname:  "{{ bmc_admin_hostname }}"
+    bmcusername:  "{{ bmc_admin_username }}"
+    bmcpassword:  "{{ bmc_admin_password }}"
     function:     raid
     subfunction:  jobqueue
     queue:        RAID.Integrated.1-1
@@ -925,3 +925,348 @@ Create virtual disks
     var: vdisks_raid_job
 ```
 
+This is an example to update firmware using a bootable ISO:
+
+```
+- name: Power off server
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     serveraction
+    subfunction:  powerdown
+
+- name: Disconnect remote ISO
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         remoteimage
+    disconnect:       true
+
+- name: Connect remote ISO
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         remoteimage
+    connect:          true
+    location:         "{{ nfs_server }}/{{ firmware_iso }}"
+
+- name: Set one time boot to enabled
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.serverboot.BootOnce
+    value:        1
+
+- name: Set one time boot device to VCD-DVD
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.serverboot.FirstBootDevice
+    value:        VCD-DVD
+
+- name: Power on server
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     serveraction
+    subfunction:  powerup
+```
+
+This example sets up an Admin user:
+
+```
+- name: Get User 4 Name
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         get
+    object:           iDRAC.Users.4.UserName
+  register: get_user4_name
+
+- name: Set User 4 Name if not correct
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         set
+    object:           iDRAC.Users.4.UserName
+    value:            "{{ bmc_sysadmin }}" 
+  register: set_user4_name
+  when:     get_user4_name != bmc_sysadmin
+
+- name: Get User 4 Name
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         get
+    object:           iDRAC.Users.4.UserName
+    searchforvalue:   UserName
+  register: get_user4_name
+  when:     get_user4_name != bmc_sysadmin
+
+- name: Output command
+  debug:
+    msg: "{{ get_user4_name.value }}"
+
+- name: Get User 4 Enabled status
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.Enable
+  register: get_user4_enable
+
+- name: Get User 4 SHA256Password key to check if password is set
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.SHA256Password
+  register: get_user4_password
+
+- name: Output command
+  debug:
+    msg: "{{ get_user4_password.command }}"
+
+- name: Output command
+  debug:
+    msg: "{{ get_user4_password.value }}"
+
+- name: Output command
+  debug:
+    msg: "{{ get_user4_name.value }}"
+
+- name: Set User 4 Password
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.Password
+    value:        "{{ bmc_password }}"
+  register: set_user4_password
+  when:     get_user4_name.value == bmc_sysadmin and get_user4_enable.value == "Disabled" and get_user4_password.value == ""
+
+- name: Set User 4 Enabled status
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.Enable
+    value:        1
+  register: set_user4_enable
+  when:     get_user4_name.value == bmc_sysadmin and get_user4_enable.value == "Disabled"
+
+- name: Get User 4 IPMI LAN Privilege
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.IpmiLanPrivilege
+  register: get_user4_ipmi_lan_privilege
+  when:     get_user4_name.value == bmc_sysadmin
+
+- name: Set User 4 IPMI LAN Privilege if required
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.IpmiLanPrivilege
+    value:        4
+  register: set_user4_ipmi_lan_privilege
+  when:     get_user4_name.value == bmc_sysadmin and not get_user4_ipmi_lan_privilege.value == "4"
+
+- name: Get User 4 IPMI Serial Privilege
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.IpmiSerialPrivilege
+  register: get_user4_ipmi_serial_privilege
+  when:     get_user4_name.value == bmc_sysadmin
+
+- name: Set User 4 IPMI Serial Privilege
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.IpmiSerialPrivilege
+    value:        4
+  register: set_user4_ipmi_serial_privilege
+  when:     get_user4_name.value == bmc_sysadmin and not get_user4_ipmi_serial_privilege.value == "4"
+
+- name: Get User 4 Privilege
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.Privilege
+  register: get_user4_privilege
+  when:     get_user4_name.value == bmc_sysadmin
+
+- name: Set User 4 Privilege
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.Privilege
+    value:        0x1ff
+  register: set_user4_privilege
+  when:     get_user4_name.value == bmc_sysadmin and not get_user4_ipmi_serial_privilege.value == "0x1ff"
+
+- name: Get User 4 SOL Enabled status
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.SolEnable
+  register: get_user4_sol_enable
+  when:     get_user4_name.value == bmc_sysadmin
+
+- name: Output command
+  debug:
+    msg: "{{ get_user4_sol_enable.command }}"
+  when: get_user4_name.value == bmc_sysadmin
+
+- name: Set User 4 SOL Enable
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.SolEnable
+    value:        Enabled
+  register: set_user4_sol_enable
+  when:     get_user4_name.value == bmc_sysadmin and not get_user4_sol_enable.value == "Disabled"
+
+- name: Get User 4 SNMP Enabled status
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     get
+    object:       iDRAC.Users.4.SNMPv3Enable
+  register: get_user4_snmp_enable
+  when:     get_user4_name.value == bmc_sysadmin
+
+- name: Set User 4 SNMP Enable
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     set
+    object:       iDRAC.Users.4.SolEnable
+    value:        Enabled
+  register: set_user4_snmp_enable
+  when:     get_user4_name.value == bmc_sysadmin and not get_user4_snmp_enable.value == "Disabled"
+```
+
+This example sets up SSH keys:
+
+```
+- name: Get User 4 Name
+  bam:
+    bmctype:          idrac
+    method:           racadm
+    bmchostname:      "{{ bmc_hostname }}"
+    bmcusername:      "{{ bmc_username }}"
+    bmcpassword:      "{{ bmc_password }}"
+    function:         get
+    object:           iDRAC.Users.4.UserName
+  register: get_user4_name
+
+- name: Get User 4 SSH key
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     sshpkauth
+    subfunction:  view
+    userindex:    4
+    keyindex:     1
+  register: get_user4_sshkey
+  when: get_user4_name.value == bmc_sysadmin
+
+- name: Get SSH key if user 4 is sysadmin
+  bam:
+    bmctype:      idrac
+    method:       racadm
+    bmchostname:  "{{ bmc_hostname }}"
+    bmcusername:  "{{ bmc_username }}"
+    bmcpassword:  "{{ bmc_password }}"
+    function:     sshpkauth
+    userindex:    4
+    keyindex:     1
+    text:         "{{ bmc_sshkey_text }}"
+    execute:      false
+  register: set_user4_sshkey
+  when: get_user4_name.value == bmc_sysadmin and not get_user4_sshkey.value == bmc_sshkey_text
+```

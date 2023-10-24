@@ -82,3 +82,5 @@
 # Improved routine to get value
 # 0.4.2: Tue 24 Oct 2023 07:08:07 AEDT
 # Added better handling handling for iDRAC sshpkauth
+# 0.4.3: Tue 24 Oct 2023 11:07:28 AEDT
+# Updated documentation and added handling for text option

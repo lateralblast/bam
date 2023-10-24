@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.4.2
+# Version:      0.4.3
 # Release:      1
 # License:      CC-BA (Creative Commons By Attribution)
 #               http://creativecommons.org/licenses/by/4.0/legalcode
@@ -1574,6 +1574,10 @@ def main():
       (stdout, stderr, rc, command, subroutine) = set_amt_value(module)
     else:
       (stdout, stderr, rc, command, subroutine) = get_amt_value(module)
+
+  if re.search(r"ssh|racadm", module.params['method']):
+    if not module.params['text'] == None:
+      module.params['text'] = "\\\"%s\\\"" % module.params['text']
 
   if re.search(r"ssh",module.params['method']):
     import pexpect
