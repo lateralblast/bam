@@ -339,7 +339,7 @@ This will produce the following output:
 
 ```
 TASK [Print Virtual Disk Information] *****************************************************************************************
-ok: ["{{ bmc_admin_hostname }}"] => {
+ok: [ BMC_HOSTNAME ] => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid get vdisks -o"
 }
 ```
@@ -383,34 +383,34 @@ The output from this example:
 
 ```
 TASK [Print job command] *************************************************************
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.2:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.3:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.4:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.5:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.6:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.7:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.8:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
-ok: ["{{ bmc_admin_hostname }}"] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
+ok: [ BMC_HOSTNAME ] => (item=racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1) => {
     "msg": "racadm --nocertwarn -r IDRAC-HOSTNAME -u IDRAC-USERNAME -p IDRAC-PASSWORD raid converttoraid:Disk.Bay.9:Enclosure.Internal.0-1:RAID.Integrated.1-1"
 }
 ```
@@ -536,7 +536,7 @@ Example output:
 
 ```
 TASK [Ouput Physical Disks] *************************************
-ok: ["{{ bmc_admin_hostname }}"] => {
+ok: [ BMC_HOSTNAME ] => {
     "msg": [
         "Disk.Bay.0:Enclosure.Internal.0-1:RAID.Integrated.1-1",
         "Disk.Bay.1:Enclosure.Internal.0-1:RAID.Integrated.1-1",
@@ -576,7 +576,7 @@ Example output:
 
 ```
 TASK [Print Virtual Disk Information] ********
-ok: ["{{ bmc_admin_hostname }}"] => {
+ok: [ BMC_HOSTNAME ] => {
     "msg": [
         "Disk.Virtual.0:RAID.Integrated.1-1",
         "Disk.Virtual.1:RAID.Integrated.1-1",
@@ -610,7 +610,7 @@ Example verbose output:
 
 ```
 TASK [Print Virtual Disk Information] ***********************************************************************************************
-ok: ["{{ bmc_admin_hostname }}"] => {
+ok: [ BMC_HOSTNAME ] => {
     "msg": [
         "Disk.Virtual.0:RAID.Integrated.1-1",
         "   Status                           = Unknown                                  ",
