@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 # Name:         bam (BMC Ansible/Automation Module)
-# Version:      0.4.3
+# Version:      0.5.4
 # Release:      1
-# License:      CC-BA (Creative Commons By Attribution)
-#               http://creativecommons.org/licenses/by/4.0/legalcode
+# License:      CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike)
+#               https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 # Group:        System
 # Source:       N/A
 # URL:          N/A
@@ -20,6 +20,7 @@ __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 import subprocess
 import pexpect
+import time
 import inspect
 import ssl
 import os
@@ -307,6 +308,9 @@ options:
   groupname:
     description:
       - Group name
+  hostname:
+    description:
+      - Hostname
   hotspare:
     description:
       - Hotspare device
@@ -710,7 +714,7 @@ def start_web_session():
   from selenium import webdriver
   from selenium.webdriver.firefox.options import Options
   options = Options()
-  options.headless = True
+  options.add_argument("-headless")
   web_session = webdriver.Firefox(options=options)
   return web_session
 
@@ -720,62 +724,59 @@ def set_amt_value(module):
   subroutine = inspect.stack()[0][3]
   import lxml
   from bs4 import BeautifulSoup
+  from selenium.webdriver.common.by import By
   result = ""
   base_url = "%s://%s:%s@%s:%s" % (module.params['method'], module.params['bmcusername'], module.params['bmcpassword'], module.params['bmchostname'], module.params['bmcport'])
+  full_url = "%s/index.htm" % (base_url)
   web_session = start_web_session()
   if not module.params['hostname'] == None or not module.params['domainname'] == None:
     full_url = "%s/fqdn.htm" % (base_url)
     if not module.params['hostname'] == None:
       search = "HostName"
       web_session.get(full_url)
-      from selenium.webdriver.common.by import By
-      field = web_session.find_element_by_name(search)
+      field = web_session.find_element(By.NAME, search)
       field.clear()
       field.send_keys(module.params['hostname'])
-      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+      web_session.find_element(By.XPATH, '//input[@value="   Submit   "]').click()
     if not module.params['domainname'] == None:
       search = "DomainName"
       web_session.get(full_url)
-      from selenium.webdriver.common.by import By
-      field = web_session.find_element_by_name(search)
+      field = web_session.find_element(By.NAME, search)
       field.clear()
       field.send_keys(module.params['domainname'])
-      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+      web_session.find_element(By.XPATH, '//input[@value="   Submit   "]').click()
   if not module.params['primarydns'] == None or not module.params['secondarydns'] == None:
     full_url = "%s/ip.htm" % (base_url)
     if not module.params['primarydns'] == None:
       search = "DNSServer"
       web_session.get(full_url)
-      from selenium.webdriver.common.by import By
-      field = web_session.find_element_by_name(search)
+      field = web_session.find_element(By.NAME, search)
       field.clear()
       field.send_keys(module.params['primarydns'])
-      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+      web_session.find_element(By.XPATH, '//input[@value="   Submit   "]').click()
     if not module.params['secondarydns'] == None:
       search = "AlternativeDns"
       web_session.get(full_url)
-      from selenium.webdriver.common.by import By
-      field = web_session.find_element_by_name(search)
+      field = web_session.find_element(By.NAME, search)
       field.clear()
       field.send_keys(module.params['secondarydns'])
-      web_session.find_element_by_xpath('//input[@value="   Submit   "]').click()
+      web_session.find_element(By.XPATH, '//input[@value="   Submit   "]').click()
   if not module.params['power'] == None:
     full_url = "%s/remote.htm" % (base_url)
-    if re.search(r"off", module.params['power']):
-      web_session.find_element_by_xpath('//input[@value="1"]').click()
-    if re.search(r"cycle", module.params['power']):
-      web_session.find_element_by_xpath('//input[@value="3"]').click()
-    if re.search(r"reset", module.params['power']):
-      web_session.find_element_by_xpath('//input[@value="4"]').click()
     web_session.get(full_url)
-    from selenium.webdriver.common.by import By
-    web_session.find_element_by_xpath('//input[@value="Send Command"]').click()
+    if re.search(r"off", module.params['power']):
+      web_session.find_element(By.XPATH, '//input[@value="1"]').click()
+    if re.search(r"cycle", module.params['power']):
+      web_session.find_element(By.XPATH, '//input[@value="3"]').click()
+    if re.search(r"reset", module.params['power']):
+      web_session.find_element(By.XPATH, '//input[@value="4"]').click()
+    web_session.find_element(By.XPATH, '//input[@value="Send Command"]').click()
     time.sleep(2)
     object = web_session.switch_to.alert
     time.sleep(2)
     object.accept()
   web_session.quit()
-  return(result, "", 0, full_url, subroutine)
+  return(result, "", 0, full_url, result, subroutine)
 
 
 # Get AMT value
@@ -900,20 +901,24 @@ def get_amt_value(module):
           if re.search(module.params['search'], result) and found == True:
             if re.search(r":", result):
               result = result.split(": ")[1]
-            return(result, "", 0, full_url, subroutine)
+            web_session.quit()
+            return(result, "", 0, full_url, result, subroutine)
         else:
           if re.search(module.params['object'], result.lower()):
             if re.search(r":", result):
               result = result.split(": ")[1]
-            return(result, "", 0, full_url, subroutine)
+            web_session.quit()
+            return(result, "", 0, full_url, result, subroutine)
       else:
-        if re.search(r"[A-Z]|[a-z]|[0-9]", search):
-          if re.search(search, result):
-            return(result, "", 0, full_url, subroutine)
+        if not module.params['search'] == None:
+          if re.search(module.params['search'], result):
+            web_session.quit()
+            return(result, "", 0, full_url, result, subroutine)
         else:
-          return(result, "", 0, full_url, subroutine)
+          web_session.quit()
+          return(result, "", 0, full_url, result, subroutine)
   web_session.quit()
-  return(result, "", 0, full_url, subroutine)
+  return(result, "", 0, full_url, result, subroutine)
 
 # Get value from line
 
@@ -1147,6 +1152,7 @@ def main():
     'get':                      { 'default':  False,   'type': 'bool' },
     'group':                    { 'default':  None,    'type': 'str' },
     'groupname':                { 'default':  None,    'type': 'str' },
+    'hostname':                 { 'default':  None,    'type': 'str' },
     'hotspare':                 { 'default':  None,    'type': 'str' },
     'id':                       { 'default':  None,    'type': 'str' },
     'ignoreheaders':            { 'default':  False,   'type': 'bool' },
@@ -1284,7 +1290,7 @@ def main():
     'user':                     { 'default':  None,    'type': 'str' },
     'userindex':                { 'default':  None,    'type': 'str' },
     'username':                 { 'default':  None,    'type': 'str' },
-    'usesshkey':                { 'default':  True,    'type': 'bool' },
+    'usesshkey':                { 'default':  None,    'type': 'bool' },
     'value':                    { 'default':  None,    'type': 'str' },
     'vdkey':                    { 'default':  None,    'type': 'str' },
     'verbose':                  { 'default':  False,   'type': 'bool' },
@@ -1553,10 +1559,11 @@ def main():
     module.params['execute'] = False
 
   if not module.params['method'] == "racadm":
-    if re.search(r"true|yes", str(module.params['usesshkey']).lower()):
-      module.params['usesshkey'] = True
-    else:
-      module.params['usesshkey'] = False
+    if not module.params['usesshkey'] == None:
+      if re.search(r"true|yes", str(module.params['usesshkey']).lower()):
+        module.params['usesshkey'] = True
+      else:
+        module.params['usesshkey'] = False
     if module.params['sshkeyfile'] == None:
       home_dir = os.environ['HOME']
       ssh_key_file = "%s/.ssh/id_%s" % (home_dir, module.params['sshkeytype'])
@@ -1565,15 +1572,15 @@ def main():
 
   if module.params['bmctype'] == "amt": 
     if not re.search(r"http", module.params['method']):
-      module.params['method'] == "http"
+      module.params['method'] = "http"
     if module.params['method'] == "http":
       module.params['bmcport'] = "16992"
     else:
       module.params['bmcport'] = "16993"
     if module.params['function'] == "set":
-      (stdout, stderr, rc, command, subroutine) = set_amt_value(module)
+      (stdout, stderr, rc, command, value, subroutine) = set_amt_value(module)
     else:
-      (stdout, stderr, rc, command, subroutine) = get_amt_value(module)
+      (stdout, stderr, rc, command, value, subroutine) = get_amt_value(module)
 
   if re.search(r"ssh|racadm", module.params['method']):
     if not module.params['text'] == None:
@@ -1581,13 +1588,11 @@ def main():
 
   if re.search(r"ssh",module.params['method']):
     import pexpect
-    if module.params['bmcpassword'] == None:
-      module.params['usesshkey'] = True
-    else:
-      if re.search(r"[A-Z]|[a-z]|[0-9]", module.params['bmcpassword']):
-        module.params['usesshkey'] = False
-      else:
+    if module.params['usesshkey'] == None:
+      if module.params['bmcpassword'] == None or len(module.params['bmcpassword']) == 0:
         module.params['usesshkey'] = True
+      else:
+        module.params['usesshkey'] = False
     if module.params['method'] == "ssh" and module.params['bmctype'] == "idrac":
       (stdout, stderr, rc, command, value, subroutine) = get_set_idrac_value(module, switches)
 
@@ -1601,9 +1606,22 @@ def main():
   if len(stdout) == 0 and len(stderr) > 0:
     stdout = stderr
 
+  changed = module.params['execute']
+  if module.params['bmctype'] == "amt":
+    if not module.params['function'] == "set":
+      changed = False
+  else:
+    if module.params['function'] == "execute":
+      words = [word for word in str(module.params['bmccommand']).split() if not word.startswith("-") and not word == "racadm"]
+      word  = words[0] if words else ""
+    else:
+      word = str(module.params['function'])
+    if word.lower().startswith("get"):
+      changed = False
+
   module.exit_json(
     _name       = module._name,
-    changed     = True,
+    changed     = changed,
     stdout      = stdout, 
     stderr      = stderr, 
     rc          = rc, 

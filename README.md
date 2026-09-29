@@ -5,7 +5,7 @@ BAM
 
 BMC Ansible/Automation Module
 
-Version: 0.4.3
+Version: 0.5.4
 
 Introduction
 ------------
@@ -79,9 +79,9 @@ Add path where module is to ---module-path in anisble-playbook command line.
 License
 -------
 
-This software is licensed as CC-BA (Creative Commons By Attrbution)
+This software is licensed as CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike)
 
-http://creativecommons.org/licenses/by/4.0/legalcode
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 
 Requirements
@@ -91,6 +91,8 @@ The following components are required:
 
 - ansible
 - python
+- pexpect
+- selenium 4.10 or later, beautifulsoup4 and lxml (AMT only, requires Firefox)
 
 Structure
 ---------
@@ -1270,3 +1272,10 @@ This example sets up SSH keys:
   register: set_user4_sshkey
   when: get_user4_name.value == bmc_sysadmin and not get_user4_sshkey.value == bmc_sshkey_text
 ```
+
+Issues to be fixed
+------------------
+
+- Passwords are exposed. The racadm method passes the password on the command line (`-p`), where it is visible in the process list, and the module returns all parameters, including `bmcpassword`, in the `meta` result, so they can appear in Ansible output and logs. Use `no_log: true` on tasks until this is fixed.
+- Commands are run through the shell (`shell = True`) without quoting the `value`, `options` and `bmccommand` parameters, so shell metacharacters in these parameters will be interpreted by the local shell.
+- SSH connections use `StrictHostKeyChecking=no`, so host keys are not verified.

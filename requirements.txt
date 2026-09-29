@@ -1,0 +1,5 @@
+ansible
+pexpect
+selenium>=4.10
+beautifulsoup4
+lxml
